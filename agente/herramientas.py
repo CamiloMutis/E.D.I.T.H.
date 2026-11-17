@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from typing import Callable
 
 from skills import soporte
+from skills.consultar_moodle import consultar_moodle
 from skills.estimar_tiempo import estimar_tiempo
 from skills.organizar_archivos import organizar_archivos
 from skills.planificar_entrega import planificar_entrega
@@ -129,6 +130,17 @@ HERRAMIENTAS: list[Herramienta] = [
                 "hasta": {"type": "string", "description": "AAAA-MM-DD, incluido"},
             },
             ["desde", "hasta"],
+        ),
+    ),
+    Herramienta(
+        "consultar_moodle",
+        consultar_moodle,
+        _objeto(
+            {
+                "dias": {"type": "integer", "description": "Días hacia adelante, de 1 a 90; 14 si no lo dice"},
+                "curso": {"type": "string", "description": "Parte del nombre del curso para filtrar"},
+            },
+            [],
         ),
     ),
     Herramienta(

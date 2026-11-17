@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Callable
+from typing import Any, Callable
 
 from ajustes import DIAS_SEMANA, Ajustes
 from db.repositorio import Repositorio
@@ -30,6 +30,7 @@ class Contexto:
     predictor: PredictorTiempo
     clasificador: ClasificadorMaterias
     reloj: Callable[[], datetime] | None = None
+    moodle: Any = None  # ClienteMoodle; se crea al primer uso en skills.consultar_moodle
 
     def ahora(self) -> datetime:
         return self.reloj() if self.reloj else datetime.now(self.ajustes.zona)
