@@ -1,0 +1,39 @@
+# Reglas y preferencias del E.D.I.T.H..
+# Todo lo que está aquí se puede cambiar sin tocar el código.
+
+zona_horaria: America/Bogota
+
+# Semestre que cursa el estudiante. Define las materias activas
+# al crear la base de datos; después se cambia con /semestre.
+semestre_actual: 7
+
+reglas:
+  horas_max_dia: 4          # tope de horas de estudio agendadas por día
+  bloque_min_minutos: 45
+  bloque_max_minutos: 120
+  descanso_minutos: 15      # pausa entre un bloque y cualquier otro evento
+  franja_inicio: "07:00"
+  franja_fin: "23:00"
+  margen_dias: 1            # el trabajo debe quedar listo este tiempo antes de la entrega
+
+holgura:
+  tranquila: 1.5            # holgura >= 1.5
+  ajustada: 1.0             # entre 1.0 y 1.5; por debajo, en riesgo
+
+clasificador:
+  umbral_confianza: 0.7     # por debajo se consulta al LLM o al usuario
+
+rutinas:
+  resumen: "07:00"
+  revision: "22:00"
+  reentreno_dia: domingo
+  reentreno_hora: "20:00"
+
+carpetas:
+  vigilada: ~/Downloads     # donde llegan los archivos nuevos
+  destino: ~/Universidad    # Universidad/<Materia>/<Entrega>/
+
+calendario:
+  backend: auto             # auto | google | local
+
+base_de_datos: data/edith.db

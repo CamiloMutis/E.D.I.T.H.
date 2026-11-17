@@ -1,0 +1,23 @@
+# Secretos y credenciales
+.env
+credentials.json
+token.json
+
+# Datos locales
+data/*.db
+data/*.db-journal
+*.sqlite3
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Sistema y editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
