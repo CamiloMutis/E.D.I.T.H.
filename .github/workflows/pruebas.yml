@@ -15,14 +15,27 @@ jobs:
         sistema: [ubuntu-latest, windows-latest]
         python: ["3.12", "3.13"]
     steps:
-      - uses: actions/checkout@v4
+      # El nombre del repositorio termina en punto y Windows no admite carpetas
+      # con ese nombre, así que el código se descarga en una carpeta "edith".
+      - name: Descargar el código
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          git init -q edith
+          cd edith
+          git remote add origin "https://github.com/${{ github.repository }}.git"
+          git fetch -q --depth 1 origin "${{ github.sha }}"
+          git checkout -q FETCH_HEAD
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
-          cache: pip
       - name: Instalar dependencias
+        shell: bash
+        working-directory: ${{ runner.temp }}/edith
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt pytest==9.2.0
       - name: Ejecutar pruebas
+        shell: bash
+        working-directory: ${{ runner.temp }}/edith
         run: python -m pytest -q
