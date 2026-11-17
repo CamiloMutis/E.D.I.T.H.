@@ -1,1 +1,1 @@
-Agente con LLM y tool calling que orquesta la vida académica: planifica entregas en Google Calendar, predice tiempos reales con ML, clasifica archivos por materia y replanifica automáticamente vía Telegram.
+▎ E.D.I.T.H. (Estudiante Dirigido por Inteligencia, Tareas y Horarios), inspirada en la IA que Tony Stark le dejó a Peter Parker. Agente con LLM y tool calling que planea tus entregas, predice tus tiempos reales con ML, organiza tus archivos y corrige tu semestre vía Telegram.
