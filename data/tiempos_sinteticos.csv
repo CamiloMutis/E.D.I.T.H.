@@ -1,0 +1,601 @@
+materia,tipo_tarea,dificultad,estimado_h,real_h,dia_semana,franja,fuente
+Algoritmos y Programación I,codigo,4,2.0,4.25,sabado,noche,sintetico
+Proyecto Integrador Profesional,estudio,3,5.5,9.5,sabado,tarde,sintetico
+Computación Móvil,estudio,3,4.5,5.5,viernes,tarde,sintetico
+Electiva de Profundización II,codigo,3,6.0,11.0,sabado,tarde,sintetico
+Redes Inalámbricas,informe,4,3.5,7.25,sabado,manana,sintetico
+Electiva de Profundización IV,presentacion,2,3.0,5.0,sabado,tarde,sintetico
+Ingeniería de Software I,lectura,2,2.0,2.75,lunes,noche,sintetico
+Computación Móvil,estudio,3,5.5,9.0,sabado,tarde,sintetico
+Electiva de Profundización I,informe,3,2.0,3.25,martes,noche,sintetico
+Redes y Comunicaciones,codigo,3,3.0,6.75,jueves,manana,sintetico
+Electiva de Profundización II,estudio,3,5.0,8.25,jueves,noche,sintetico
+Arquitectura de Computadores,lectura,4,1.0,1.0,lunes,tarde,sintetico
+Gobierno y Servicios de TI,taller,3,2.0,3.25,lunes,noche,sintetico
+Proyecto Integrador de Grado,lectura,3,1.5,1.75,viernes,manana,sintetico
+Computación Móvil,codigo,3,4.5,11.25,sabado,tarde,sintetico
+Inglés IV,taller,3,1.5,1.5,jueves,noche,sintetico
+Proyecto Integrador Básico,presentacion,3,2.0,4.5,lunes,noche,sintetico
+Fundamentos de Sistemas de Información,estudio,2,2.5,2.75,sabado,tarde,sintetico
+Física y Laboratorio I,informe,3,2.5,3.5,jueves,noche,sintetico
+Matemáticas Fundamentales,estudio,3,7.0,11.25,sabado,noche,sintetico
+Sistemas Operativos,codigo,3,5.5,12.75,lunes,tarde,sintetico
+Redes Inalámbricas,codigo,2,3.0,4.25,lunes,noche,sintetico
+Lenguajes de Programación,informe,2,3.0,6.0,viernes,tarde,sintetico
+Estructura de Datos,codigo,3,2.0,5.25,jueves,noche,sintetico
+Electiva de Especialización V,lectura,2,2.0,2.0,miercoles,manana,sintetico
+Constitución Política,lectura,1,1.0,1.25,lunes,noche,sintetico
+Electiva de Profundización IV,informe,3,2.0,2.75,sabado,tarde,sintetico
+Constitución Política,estudio,4,6.0,8.25,miercoles,tarde,sintetico
+Lenguajes de Programación,taller,2,2.0,2.0,jueves,manana,sintetico
+Electiva de Profundización VI,presentacion,5,3.0,6.5,domingo,noche,sintetico
+Ingeniería de Software I,estudio,3,4.5,8.75,miercoles,tarde,sintetico
+Análisis de Algoritmos,estudio,2,6.5,7.75,martes,manana,sintetico
+Investigación de Operaciones,estudio,2,4.5,5.25,martes,tarde,sintetico
+Inglés IV,taller,3,2.5,3.5,jueves,tarde,sintetico
+Electiva de Profundización VI,lectura,2,1.0,1.0,lunes,noche,sintetico
+Introducción a la Ingeniería,estudio,3,4.5,5.0,sabado,manana,sintetico
+Electiva de Profundización VI,lectura,4,1.5,1.75,miercoles,noche,sintetico
+Inglés IV,lectura,3,1.5,1.5,lunes,manana,sintetico
+Matemáticas Fundamentales,estudio,2,2.0,2.5,domingo,noche,sintetico
+Electiva de Profundización II,informe,2,1.5,2.25,lunes,noche,sintetico
+Computación Móvil,estudio,5,3.5,6.5,viernes,tarde,sintetico
+Electiva de Profundización VI,lectura,5,1.0,2.25,domingo,tarde,sintetico
+Electiva de Especialización V,informe,3,5.5,6.75,lunes,manana,sintetico
+Electiva de Profundización IV,presentacion,3,2.5,2.5,martes,tarde,sintetico
+Constitución Política,informe,3,3.5,6.0,lunes,manana,sintetico
+Programación Orientada a la Web,lectura,3,1.0,1.75,miercoles,noche,sintetico
+Inglés IV,taller,5,3.5,5.0,martes,noche,sintetico
+Matemáticas Fundamentales,estudio,2,4.0,6.25,miercoles,noche,sintetico
+Arquitectura de Software,presentacion,3,2.0,3.75,lunes,noche,sintetico
+Sistemas Operativos,estudio,3,4.0,8.25,viernes,tarde,sintetico
+Electiva de Profundización I,taller,3,2.0,1.75,jueves,tarde,sintetico
+Álgebra Lineal,taller,1,2.0,2.25,miercoles,tarde,sintetico
+Estadística y Probabilidad,taller,4,5.0,12.5,viernes,noche,sintetico
+Ingeniería de Software I,presentacion,3,2.5,4.5,jueves,noche,sintetico
+Matemáticas Discretas,estudio,2,3.5,6.5,miercoles,noche,sintetico
+Sistemas Operativos,codigo,4,4.0,8.25,lunes,noche,sintetico
+Álgebra Lineal,estudio,4,3.0,5.75,sabado,noche,sintetico
+Gestión de Proyectos de TI,informe,3,3.5,3.75,viernes,noche,sintetico
+Redes Inalámbricas,estudio,3,2.0,2.25,jueves,tarde,sintetico
+Electiva de Profundización II,informe,4,4.5,8.0,lunes,noche,sintetico
+Inglés I,taller,3,2.5,2.75,viernes,noche,sintetico
+Constitución Política,informe,3,2.0,3.25,miercoles,noche,sintetico
+Física y Laboratorio I,lectura,2,2.0,2.5,sabado,noche,sintetico
+Inteligencia Artificial,codigo,4,10.0,23.0,domingo,manana,sintetico
+Física y Laboratorio I,lectura,3,2.5,2.0,lunes,manana,sintetico
+Electiva de Área I,lectura,2,1.5,1.5,miercoles,tarde,sintetico
+Constitución Política,presentacion,3,3.0,4.5,lunes,tarde,sintetico
+Inteligencia Artificial,codigo,3,4.5,11.0,domingo,manana,sintetico
+Física y Laboratorio II,informe,3,2.5,4.75,martes,manana,sintetico
+Arquitectura Empresarial,informe,4,2.0,3.0,lunes,noche,sintetico
+Estructura de Datos,informe,4,3.5,11.25,sabado,noche,sintetico
+Gobierno y Servicios de TI,informe,2,2.5,4.75,sabado,manana,sintetico
+Constitución Política,presentacion,2,1.5,1.75,viernes,noche,sintetico
+Cálculo I,presentacion,2,1.5,2.25,viernes,manana,sintetico
+Cálculo II,estudio,4,3.5,4.5,domingo,manana,sintetico
+Arquitectura de Computadores,estudio,3,4.5,8.75,jueves,noche,sintetico
+Constitución Política,lectura,4,2.5,3.5,miercoles,noche,sintetico
+Ingeniería de Software I,lectura,5,2.0,3.0,jueves,manana,sintetico
+Algoritmos y Programación I,codigo,3,4.5,9.0,miercoles,noche,sintetico
+Electiva de Profundización I,codigo,2,3.5,8.0,martes,manana,sintetico
+Algoritmos y Programación II,codigo,3,3.5,8.75,martes,noche,sintetico
+Lenguajes de Programación,estudio,4,4.5,13.5,miercoles,tarde,sintetico
+Electiva de Profundización VI,estudio,3,4.0,5.5,jueves,noche,sintetico
+Fundamentos de Sistemas de Información,taller,2,3.0,4.25,sabado,tarde,sintetico
+Seguridad en Redes,informe,3,2.5,5.5,sabado,tarde,sintetico
+Matemáticas Discretas,informe,1,4.0,8.0,sabado,noche,sintetico
+Física y Laboratorio II,informe,1,6.0,10.0,viernes,noche,sintetico
+Electiva de Área I,estudio,1,3.5,3.25,miercoles,tarde,sintetico
+Redes Inalámbricas,lectura,4,2.0,3.75,martes,manana,sintetico
+Electiva de Especialización V,presentacion,4,4.5,6.0,jueves,manana,sintetico
+Ecuaciones Diferenciales,estudio,3,3.5,4.0,lunes,tarde,sintetico
+Física y Laboratorio II,informe,1,2.0,3.5,domingo,tarde,sintetico
+Gestión de Proyectos de TI,informe,1,2.5,3.25,jueves,noche,sintetico
+Inglés III,estudio,3,5.0,6.5,viernes,tarde,sintetico
+Electiva de Profundización IV,lectura,3,1.5,2.0,sabado,noche,sintetico
+Inglés II,presentacion,2,2.0,1.75,viernes,tarde,sintetico
+Introducción a la Ingeniería,presentacion,3,3.5,5.5,miercoles,manana,sintetico
+Fundamentos de Sistemas de Información,presentacion,4,1.5,2.25,lunes,tarde,sintetico
+Electiva de Área I,estudio,3,6.5,12.0,martes,noche,sintetico
+Proyecto Integrador de Grado,presentacion,1,2.0,2.25,sabado,noche,sintetico
+Matemáticas Discretas,estudio,2,4.0,8.0,lunes,noche,sintetico
+Cálculo I,taller,5,2.5,4.0,domingo,noche,sintetico
+Inglés II,estudio,2,4.0,3.0,lunes,noche,sintetico
+Física y Laboratorio II,estudio,4,3.5,6.75,miercoles,noche,sintetico
+Autómatas y Lenguajes Formales,informe,1,2.0,3.0,sabado,manana,sintetico
+Investigación de Operaciones,estudio,2,4.5,6.75,viernes,noche,sintetico
+Arquitectura Empresarial,codigo,3,4.5,6.75,martes,manana,sintetico
+Constitución Política,lectura,3,1.0,0.75,lunes,noche,sintetico
+Razonamiento Cuantitativo,estudio,3,3.5,5.25,miercoles,noche,sintetico
+Redes y Comunicaciones,informe,4,2.0,4.5,domingo,tarde,sintetico
+Constitución Política,informe,3,3.5,3.5,domingo,manana,sintetico
+Matemáticas Discretas,estudio,5,8.5,11.25,miercoles,manana,sintetico
+Proyecto Integrador Básico,informe,2,4.0,6.5,martes,noche,sintetico
+Electiva de Profundización III,estudio,2,3.5,2.75,domingo,tarde,sintetico
+Redes y Comunicaciones,presentacion,2,3.0,4.5,miercoles,noche,sintetico
+Introducción a la Ingeniería,informe,4,7.5,14.0,miercoles,manana,sintetico
+Física y Laboratorio II,estudio,4,6.5,9.25,sabado,tarde,sintetico
+Fundamentos de Sistemas de Información,presentacion,3,3.5,6.75,sabado,manana,sintetico
+Electiva de Área I,presentacion,3,3.5,3.0,viernes,tarde,sintetico
+Proyecto Integrador Profesional,informe,1,2.0,2.5,lunes,manana,sintetico
+Programación Orientada a la Web,informe,2,4.0,5.5,miercoles,tarde,sintetico
+Autómatas y Lenguajes Formales,lectura,3,1.5,2.5,martes,tarde,sintetico
+Electiva de Área I,informe,3,1.5,3.0,domingo,tarde,sintetico
+Redes y Comunicaciones,presentacion,3,1.0,1.0,sabado,tarde,sintetico
+Seguridad en Redes,informe,3,2.0,3.0,viernes,noche,sintetico
+Seguridad en Redes,informe,4,3.5,6.5,viernes,manana,sintetico
+Electiva de Profundización IV,informe,1,3.5,6.25,martes,noche,sintetico
+Cálculo II,estudio,3,7.5,13.5,viernes,noche,sintetico
+Electiva de Profundización III,presentacion,3,2.0,5.25,sabado,noche,sintetico
+Arquitectura Empresarial,taller,2,3.0,4.0,domingo,tarde,sintetico
+Inglés II,lectura,4,2.0,1.5,martes,manana,sintetico
+Análisis de Algoritmos,taller,2,4.0,8.5,lunes,noche,sintetico
+Física y Laboratorio I,lectura,3,1.0,1.5,domingo,manana,sintetico
+Programación Orientada a la Web,presentacion,3,4.5,8.75,jueves,manana,sintetico
+Análisis de Algoritmos,estudio,3,2.5,3.75,lunes,tarde,sintetico
+Gestión de Proyectos de TI,codigo,4,2.5,5.5,lunes,noche,sintetico
+Pensamiento Sistémico,informe,4,2.5,3.5,viernes,tarde,sintetico
+Razonamiento Cuantitativo,estudio,4,4.0,5.5,miercoles,noche,sintetico
+Algoritmos y Programación II,codigo,3,4.5,9.75,miercoles,noche,sintetico
+Electiva de Profundización IV,presentacion,3,3.0,3.75,lunes,noche,sintetico
+Fundamentos de Sistemas de Información,informe,2,1.5,2.25,martes,tarde,sintetico
+Sistemas Operativos,codigo,4,5.0,19.0,miercoles,noche,sintetico
+Autómatas y Lenguajes Formales,estudio,2,3.5,7.0,lunes,noche,sintetico
+Electiva de Área I,informe,5,6.5,13.25,sabado,tarde,sintetico
+Sistemas Operativos,lectura,5,1.5,3.5,miercoles,noche,sintetico
+Ingeniería de Software II,lectura,4,2.0,3.0,domingo,tarde,sintetico
+Ecuaciones Diferenciales,estudio,1,2.5,2.25,martes,noche,sintetico
+Arquitectura de Tecnología de Información,presentacion,2,1.5,1.75,sabado,tarde,sintetico
+Pensamiento Sistémico,taller,3,3.0,4.0,jueves,tarde,sintetico
+Redes Inalámbricas,informe,3,3.0,5.0,jueves,tarde,sintetico
+Computación Móvil,presentacion,2,1.5,2.75,domingo,noche,sintetico
+Electiva de Especialización V,codigo,1,2.5,3.5,miercoles,noche,sintetico
+Razonamiento Cuantitativo,taller,3,2.0,3.0,martes,noche,sintetico
+Proyecto Integrador Profesional,taller,3,2.5,6.0,miercoles,noche,sintetico
+Arquitectura de Computadores,informe,3,3.0,4.0,domingo,manana,sintetico
+Lenguajes de Programación,codigo,4,6.0,18.75,martes,tarde,sintetico
+Ingeniería de Software II,taller,4,1.5,2.5,domingo,tarde,sintetico
+Introducción a la Ingeniería,presentacion,2,4.5,5.5,domingo,tarde,sintetico
+Inglés III,lectura,3,2.0,2.5,jueves,manana,sintetico
+Electiva de Profundización I,informe,4,3.0,7.0,domingo,tarde,sintetico
+Análisis de Algoritmos,estudio,4,6.5,13.0,lunes,noche,sintetico
+Razonamiento Cuantitativo,taller,1,0.5,0.5,jueves,noche,sintetico
+Electiva de Profundización I,presentacion,2,3.5,3.75,martes,manana,sintetico
+Inteligencia Artificial,estudio,3,4.0,4.75,viernes,tarde,sintetico
+Estructura de Datos,informe,2,2.0,4.25,viernes,tarde,sintetico
+Programación Orientada a la Web,taller,3,3.0,4.0,lunes,tarde,sintetico
+Electiva de Área I,lectura,3,2.0,3.0,sabado,noche,sintetico
+Razonamiento Cuantitativo,taller,4,3.5,5.0,miercoles,noche,sintetico
+Estructura de Datos,codigo,4,3.5,10.75,domingo,tarde,sintetico
+Bases de Datos,codigo,4,5.0,15.0,domingo,tarde,sintetico
+Arquitectura de Computadores,presentacion,4,2.0,3.25,jueves,noche,sintetico
+Ingeniería de Software I,informe,3,2.5,5.75,jueves,noche,sintetico
+Inglés II,taller,4,1.5,1.75,lunes,noche,sintetico
+Arquitectura Empresarial,informe,3,3.5,5.75,viernes,manana,sintetico
+Arquitectura Empresarial,informe,4,3.0,4.0,domingo,noche,sintetico
+Investigación de Operaciones,estudio,4,4.5,7.25,martes,noche,sintetico
+Constitución Política,lectura,3,1.0,1.5,lunes,noche,sintetico
+Electiva de Profundización II,taller,4,3.0,4.0,sabado,tarde,sintetico
+Gobierno y Servicios de TI,presentacion,4,3.0,4.0,martes,noche,sintetico
+Proyecto Integrador de Grado,estudio,5,8.0,14.75,sabado,tarde,sintetico
+Sistemas Operativos,taller,3,4.0,5.75,miercoles,tarde,sintetico
+Estructura de Datos,taller,3,3.0,7.0,domingo,tarde,sintetico
+Cálculo II,estudio,2,2.0,2.0,lunes,tarde,sintetico
+Electiva de Especialización V,lectura,5,3.0,5.0,martes,noche,sintetico
+Electiva de Profundización IV,estudio,3,3.5,3.5,lunes,noche,sintetico
+Gestión de Proyectos de TI,informe,3,3.0,6.75,sabado,noche,sintetico
+Programación Orientada a la Web,presentacion,4,3.0,6.75,viernes,manana,sintetico
+Ecuaciones Diferenciales,taller,4,3.0,4.0,miercoles,manana,sintetico
+Ecuaciones Diferenciales,estudio,2,5.0,9.25,sabado,tarde,sintetico
+Gestión de Proyectos de TI,lectura,3,1.5,2.25,sabado,manana,sintetico
+Ecuaciones Diferenciales,estudio,2,3.5,3.5,martes,manana,sintetico
+Electiva de Profundización II,informe,3,3.0,5.25,sabado,noche,sintetico
+Matemáticas Discretas,estudio,3,6.5,10.5,domingo,noche,sintetico
+Constitución Política,informe,3,3.0,6.5,sabado,tarde,sintetico
+Inglés II,taller,2,3.0,4.0,miercoles,noche,sintetico
+Proyecto Integrador Básico,informe,4,4.5,9.5,martes,tarde,sintetico
+Proyecto Integrador de Grado,lectura,3,2.5,2.0,viernes,noche,sintetico
+Ingeniería de Software I,informe,3,2.0,2.75,martes,tarde,sintetico
+Investigación de Operaciones,estudio,5,4.0,5.25,jueves,manana,sintetico
+Bases de Datos,taller,2,1.5,2.0,jueves,noche,sintetico
+Álgebra Lineal,taller,3,3.5,4.5,miercoles,tarde,sintetico
+Electiva de Profundización II,informe,2,3.0,5.5,lunes,noche,sintetico
+Electiva de Profundización I,lectura,4,2.0,4.75,domingo,noche,sintetico
+Arquitectura de Tecnología de Información,informe,2,2.0,2.0,viernes,tarde,sintetico
+Cálculo I,taller,3,2.0,3.0,miercoles,noche,sintetico
+Física y Laboratorio II,taller,3,2.0,3.25,lunes,noche,sintetico
+Introducción a la Ingeniería,informe,2,1.5,1.5,domingo,manana,sintetico
+Inglés I,estudio,4,5.5,6.0,sabado,tarde,sintetico
+Inglés I,taller,2,3.0,3.25,miercoles,noche,sintetico
+Programación Orientada a la Web,codigo,3,3.0,6.75,domingo,tarde,sintetico
+Inteligencia Artificial,taller,5,2.0,6.5,miercoles,noche,sintetico
+Redes Inalámbricas,lectura,3,1.0,1.25,miercoles,noche,sintetico
+Computación Móvil,codigo,5,5.0,11.5,miercoles,tarde,sintetico
+Bases de Datos,lectura,3,1.5,2.5,miercoles,manana,sintetico
+Electiva de Profundización VI,informe,3,3.0,4.5,miercoles,noche,sintetico
+Electiva de Profundización VI,codigo,4,7.0,13.0,domingo,manana,sintetico
+Cálculo I,estudio,3,7.0,10.75,domingo,manana,sintetico
+Algoritmos y Programación I,codigo,1,4.5,7.5,lunes,tarde,sintetico
+Redes y Comunicaciones,taller,3,3.5,5.5,sabado,tarde,sintetico
+Redes Inalámbricas,estudio,1,4.5,3.25,martes,tarde,sintetico
+Programación Orientada a la Web,taller,2,1.0,2.0,sabado,noche,sintetico
+Inglés IV,lectura,1,2.0,1.0,jueves,noche,sintetico
+Física y Laboratorio I,informe,4,3.5,8.75,miercoles,noche,sintetico
+Proyecto Integrador Profesional,informe,3,4.5,7.0,domingo,tarde,sintetico
+Lenguajes de Programación,codigo,1,4.5,7.5,viernes,manana,sintetico
+Electiva de Profundización IV,informe,4,2.0,4.25,martes,tarde,sintetico
+Inglés I,estudio,5,6.0,14.5,miercoles,manana,sintetico
+Electiva de Profundización III,lectura,3,1.0,0.75,viernes,manana,sintetico
+Arquitectura de Tecnología de Información,informe,2,2.5,3.5,domingo,tarde,sintetico
+Inglés II,estudio,3,4.5,5.5,domingo,noche,sintetico
+Matemáticas Discretas,estudio,3,5.5,5.75,domingo,tarde,sintetico
+Estructura de Datos,taller,3,4.0,9.5,miercoles,noche,sintetico
+Física y Laboratorio I,estudio,4,2.5,4.25,viernes,noche,sintetico
+Electiva de Profundización IV,lectura,3,2.5,4.5,sabado,noche,sintetico
+Investigación de Operaciones,taller,3,2.5,5.0,jueves,tarde,sintetico
+Gestión de Proyectos de TI,estudio,2,6.0,6.5,lunes,noche,sintetico
+Ecuaciones Diferenciales,taller,5,2.5,5.5,martes,tarde,sintetico
+Seguridad en Redes,informe,3,2.5,3.75,domingo,manana,sintetico
+Algoritmos y Programación II,estudio,4,5.0,8.5,jueves,noche,sintetico
+Seguridad en Redes,presentacion,4,2.0,5.5,viernes,tarde,sintetico
+Inglés III,presentacion,3,2.5,3.75,jueves,noche,sintetico
+Lenguajes de Programación,codigo,2,5.0,11.0,miercoles,tarde,sintetico
+Arquitectura Empresarial,presentacion,2,1.5,1.75,martes,manana,sintetico
+Introducción a la Ingeniería,lectura,1,2.0,1.5,jueves,tarde,sintetico
+Electiva de Profundización VI,codigo,4,5.0,18.75,lunes,noche,sintetico
+Matemáticas Fundamentales,estudio,2,4.5,5.25,jueves,manana,sintetico
+Investigación de Operaciones,taller,3,2.5,6.75,sabado,noche,sintetico
+Autómatas y Lenguajes Formales,codigo,2,4.5,10.75,viernes,tarde,sintetico
+Bases de Datos,codigo,2,2.0,4.0,jueves,tarde,sintetico
+Análisis de Algoritmos,codigo,1,3.0,8.75,martes,noche,sintetico
+Cálculo I,taller,5,3.5,7.25,domingo,tarde,sintetico
+Proyecto Integrador Profesional,estudio,2,2.5,3.5,sabado,tarde,sintetico
+Análisis de Algoritmos,lectura,3,1.0,1.5,martes,noche,sintetico
+Electiva de Área I,estudio,2,2.5,2.75,jueves,noche,sintetico
+Estructura de Datos,codigo,3,5.0,6.75,martes,tarde,sintetico
+Arquitectura Empresarial,taller,3,3.0,5.0,sabado,manana,sintetico
+Electiva de Profundización II,informe,3,4.5,7.5,miercoles,noche,sintetico
+Introducción a la Ingeniería,presentacion,1,2.0,2.25,domingo,noche,sintetico
+Bases de Datos,informe,3,3.5,7.5,jueves,tarde,sintetico
+Ingeniería de Software I,codigo,2,2.5,5.0,jueves,manana,sintetico
+Matemáticas Discretas,presentacion,5,4.0,10.0,sabado,noche,sintetico
+Investigación de Operaciones,estudio,3,3.0,4.75,martes,tarde,sintetico
+Inglés I,taller,2,2.0,1.75,martes,noche,sintetico
+Matemáticas Fundamentales,taller,4,2.5,4.5,viernes,noche,sintetico
+Computación Móvil,codigo,2,3.0,4.5,lunes,tarde,sintetico
+Redes y Comunicaciones,lectura,1,1.0,1.0,martes,tarde,sintetico
+Ingeniería de Software II,presentacion,2,3.5,2.75,miercoles,manana,sintetico
+Electiva de Profundización III,informe,3,2.5,4.25,lunes,noche,sintetico
+Proyecto Integrador Básico,taller,4,2.5,3.0,sabado,manana,sintetico
+Proyecto Integrador Profesional,codigo,2,4.5,10.0,domingo,noche,sintetico
+Física y Laboratorio II,informe,2,4.0,9.5,domingo,noche,sintetico
+Física y Laboratorio I,informe,4,3.5,6.5,martes,tarde,sintetico
+Constitución Política,informe,3,3.0,4.0,sabado,tarde,sintetico
+Razonamiento Cuantitativo,taller,1,1.5,2.0,miercoles,tarde,sintetico
+Programación Orientada a la Web,estudio,4,6.5,7.25,viernes,noche,sintetico
+Matemáticas Discretas,taller,4,2.0,3.5,martes,tarde,sintetico
+Arquitectura de Computadores,estudio,4,6.0,10.0,lunes,noche,sintetico
+Estadística y Probabilidad,estudio,4,3.5,7.25,jueves,noche,sintetico
+Proyecto Integrador de Grado,lectura,3,1.5,1.75,martes,noche,sintetico
+Electiva de Profundización VI,informe,4,3.0,4.5,domingo,noche,sintetico
+Proyecto Integrador Básico,presentacion,4,6.0,9.5,sabado,noche,sintetico
+Bases de Datos,codigo,4,4.5,10.25,viernes,manana,sintetico
+Algoritmos y Programación I,estudio,3,4.0,7.5,martes,noche,sintetico
+Física y Laboratorio II,taller,4,2.0,3.75,sabado,noche,sintetico
+Ingeniería de Software I,estudio,2,3.0,4.25,martes,tarde,sintetico
+Gobierno y Servicios de TI,informe,3,2.5,3.25,domingo,noche,sintetico
+Razonamiento Cuantitativo,estudio,3,4.5,6.25,domingo,tarde,sintetico
+Programación Orientada a la Web,taller,3,2.0,3.75,martes,noche,sintetico
+Bases de Datos,codigo,5,5.0,17.5,sabado,tarde,sintetico
+Matemáticas Fundamentales,estudio,1,3.0,3.0,domingo,noche,sintetico
+Álgebra Lineal,estudio,2,2.5,4.0,domingo,manana,sintetico
+Estadística y Probabilidad,taller,5,3.0,4.5,lunes,manana,sintetico
+Proyecto Integrador Profesional,estudio,3,4.0,6.0,viernes,noche,sintetico
+Electiva de Profundización IV,lectura,4,1.5,1.5,viernes,tarde,sintetico
+Computación Móvil,taller,4,1.5,3.5,martes,noche,sintetico
+Sistemas Operativos,informe,3,4.0,6.75,sabado,tarde,sintetico
+Inteligencia Artificial,taller,2,3.0,6.5,domingo,tarde,sintetico
+Autómatas y Lenguajes Formales,codigo,3,3.0,6.25,viernes,noche,sintetico
+Lenguajes de Programación,codigo,3,5.5,9.25,lunes,manana,sintetico
+Electiva de Profundización I,informe,3,3.0,3.75,sabado,tarde,sintetico
+Constitución Política,lectura,3,1.5,1.25,jueves,tarde,sintetico
+Proyecto Integrador de Grado,informe,3,2.0,4.25,sabado,tarde,sintetico
+Redes y Comunicaciones,presentacion,1,3.0,2.25,jueves,manana,sintetico
+Ingeniería de Software II,lectura,3,1.5,2.0,lunes,noche,sintetico
+Electiva de Profundización VI,presentacion,3,3.0,4.5,martes,noche,sintetico
+Inglés II,estudio,1,3.5,3.5,miercoles,noche,sintetico
+Inglés IV,presentacion,1,2.0,2.0,sabado,tarde,sintetico
+Sistemas Operativos,presentacion,4,2.5,3.0,viernes,tarde,sintetico
+Inglés III,taller,4,3.5,6.75,domingo,noche,sintetico
+Física y Laboratorio II,presentacion,3,2.5,3.5,domingo,noche,sintetico
+Sistemas Operativos,codigo,3,3.5,11.75,jueves,noche,sintetico
+Gobierno y Servicios de TI,taller,3,1.5,1.5,miercoles,manana,sintetico
+Pensamiento Sistémico,estudio,2,4.5,4.0,martes,manana,sintetico
+Fundamentos de Sistemas de Información,taller,4,2.0,2.75,viernes,manana,sintetico
+Introducción a la Ingeniería,informe,2,2.0,4.0,sabado,tarde,sintetico
+Ingeniería de Software I,presentacion,3,3.0,4.25,sabado,manana,sintetico
+Redes Inalámbricas,informe,2,2.0,2.5,martes,noche,sintetico
+Seguridad en Redes,taller,5,1.5,3.0,jueves,tarde,sintetico
+Cálculo I,estudio,3,4.5,5.0,miercoles,tarde,sintetico
+Sistemas Operativos,estudio,4,3.5,4.5,sabado,manana,sintetico
+Arquitectura de Software,informe,2,3.0,4.25,martes,tarde,sintetico
+Algoritmos y Programación II,estudio,4,4.0,9.0,sabado,noche,sintetico
+Razonamiento Cuantitativo,informe,3,3.5,6.5,domingo,noche,sintetico
+Estadística y Probabilidad,taller,1,0.5,0.5,jueves,noche,sintetico
+Sistemas Operativos,taller,2,3.5,3.0,viernes,manana,sintetico
+Razonamiento Cuantitativo,lectura,2,1.0,1.5,jueves,noche,sintetico
+Electiva de Profundización VI,informe,3,4.5,6.0,martes,noche,sintetico
+Electiva de Especialización V,taller,2,1.5,1.5,domingo,tarde,sintetico
+Física y Laboratorio I,estudio,1,2.0,1.75,martes,manana,sintetico
+Electiva de Profundización II,informe,5,4.0,6.0,miercoles,noche,sintetico
+Introducción a la Ingeniería,lectura,2,1.0,1.0,sabado,tarde,sintetico
+Estadística y Probabilidad,estudio,2,3.5,3.5,lunes,manana,sintetico
+Física y Laboratorio I,taller,3,3.5,5.0,lunes,tarde,sintetico
+Fundamentos de Sistemas de Información,informe,5,4.5,6.0,martes,tarde,sintetico
+Electiva de Área I,informe,3,2.5,4.0,lunes,tarde,sintetico
+Electiva de Profundización II,codigo,3,3.0,4.5,jueves,tarde,sintetico
+Proyecto Integrador Profesional,estudio,4,6.0,9.0,lunes,manana,sintetico
+Arquitectura Empresarial,estudio,3,8.5,10.75,martes,noche,sintetico
+Bases de Datos,codigo,3,6.0,12.75,jueves,tarde,sintetico
+Matemáticas Discretas,estudio,4,8.0,15.0,jueves,tarde,sintetico
+Matemáticas Fundamentales,taller,5,3.0,5.0,lunes,tarde,sintetico
+Constitución Política,presentacion,3,2.5,3.5,miercoles,noche,sintetico
+Proyecto Integrador Profesional,lectura,4,1.5,2.25,domingo,noche,sintetico
+Arquitectura Empresarial,informe,4,3.5,7.25,domingo,manana,sintetico
+Gestión de Proyectos de TI,informe,2,4.0,6.5,viernes,tarde,sintetico
+Inglés II,lectura,2,1.5,1.75,sabado,noche,sintetico
+Pensamiento Sistémico,taller,4,4.0,12.0,domingo,tarde,sintetico
+Redes Inalámbricas,informe,4,1.5,3.0,sabado,noche,sintetico
+Electiva de Área I,presentacion,5,3.5,5.5,viernes,manana,sintetico
+Computación Móvil,codigo,3,3.5,7.75,martes,noche,sintetico
+Electiva de Especialización V,informe,3,2.5,2.75,lunes,manana,sintetico
+Arquitectura Empresarial,taller,1,2.5,2.75,miercoles,tarde,sintetico
+Cálculo II,estudio,4,4.0,6.5,martes,noche,sintetico
+Electiva de Profundización IV,estudio,3,4.0,6.75,miercoles,noche,sintetico
+Física y Laboratorio I,estudio,4,2.5,6.25,sabado,noche,sintetico
+Autómatas y Lenguajes Formales,informe,2,2.5,3.75,sabado,manana,sintetico
+Programación Orientada a la Web,estudio,2,4.0,6.0,viernes,tarde,sintetico
+Inteligencia Artificial,taller,3,2.5,4.25,jueves,tarde,sintetico
+Electiva de Profundización II,lectura,4,1.0,1.25,domingo,tarde,sintetico
+Análisis de Algoritmos,taller,5,3.5,10.0,jueves,noche,sintetico
+Electiva de Profundización VI,presentacion,3,2.0,3.0,martes,noche,sintetico
+Electiva de Profundización IV,informe,3,3.0,5.0,jueves,noche,sintetico
+Electiva de Profundización IV,codigo,2,2.5,4.5,lunes,manana,sintetico
+Matemáticas Fundamentales,lectura,3,1.0,1.25,lunes,noche,sintetico
+Fundamentos de Sistemas de Información,informe,3,4.0,6.5,domingo,noche,sintetico
+Arquitectura de Tecnología de Información,informe,4,4.0,9.5,martes,tarde,sintetico
+Electiva de Profundización III,presentacion,2,1.5,1.5,lunes,tarde,sintetico
+Proyecto Integrador Profesional,informe,3,3.5,7.0,miercoles,tarde,sintetico
+Arquitectura de Computadores,estudio,5,2.5,3.75,lunes,noche,sintetico
+Electiva de Profundización III,presentacion,3,5.0,8.25,sabado,tarde,sintetico
+Ingeniería de Software I,informe,2,3.0,3.0,miercoles,tarde,sintetico
+Arquitectura de Software,codigo,3,3.5,6.75,martes,tarde,sintetico
+Matemáticas Fundamentales,estudio,4,3.5,6.25,miercoles,tarde,sintetico
+Proyecto Integrador Básico,lectura,4,2.5,5.75,lunes,noche,sintetico
+Autómatas y Lenguajes Formales,taller,3,2.0,2.25,jueves,tarde,sintetico
+Arquitectura de Computadores,codigo,3,2.5,5.5,viernes,noche,sintetico
+Cálculo I,taller,5,3.5,6.0,jueves,noche,sintetico
+Electiva de Profundización III,estudio,2,3.5,3.5,miercoles,manana,sintetico
+Algoritmos y Programación I,taller,4,1.5,3.75,martes,noche,sintetico
+Arquitectura de Computadores,informe,1,2.5,4.0,miercoles,manana,sintetico
+Proyecto Integrador de Grado,estudio,4,6.0,7.5,domingo,tarde,sintetico
+Programación Orientada a la Web,codigo,4,2.0,4.5,jueves,noche,sintetico
+Inglés III,taller,3,3.0,3.5,miercoles,tarde,sintetico
+Electiva de Profundización I,presentacion,3,3.0,4.75,jueves,manana,sintetico
+Estructura de Datos,presentacion,2,2.0,1.75,martes,manana,sintetico
+Electiva de Profundización I,taller,4,3.0,4.75,viernes,manana,sintetico
+Inglés I,taller,4,3.0,5.25,domingo,manana,sintetico
+Razonamiento Cuantitativo,taller,4,6.5,9.5,sabado,manana,sintetico
+Matemáticas Discretas,taller,3,1.0,1.5,lunes,noche,sintetico
+Computación Móvil,estudio,5,7.5,14.75,miercoles,tarde,sintetico
+Ingeniería de Software II,informe,4,4.0,10.0,sabado,noche,sintetico
+Investigación de Operaciones,taller,5,3.5,9.0,martes,tarde,sintetico
+Arquitectura de Software,taller,1,1.0,1.5,miercoles,manana,sintetico
+Ingeniería de Software II,estudio,2,4.0,4.75,lunes,tarde,sintetico
+Cálculo I,estudio,5,6.5,13.25,lunes,manana,sintetico
+Electiva de Profundización II,estudio,1,4.5,3.25,viernes,manana,sintetico
+Electiva de Profundización VI,informe,5,4.5,11.5,martes,noche,sintetico
+Arquitectura de Software,presentacion,2,2.5,3.75,sabado,tarde,sintetico
+Seguridad en Redes,presentacion,5,2.5,5.75,miercoles,noche,sintetico
+Arquitectura Empresarial,informe,4,2.5,5.25,jueves,tarde,sintetico
+Investigación de Operaciones,taller,3,2.0,1.75,lunes,manana,sintetico
+Cálculo I,estudio,3,3.5,6.75,lunes,noche,sintetico
+Seguridad en Redes,taller,4,1.5,3.0,viernes,noche,sintetico
+Electiva de Área I,estudio,1,2.0,2.0,jueves,manana,sintetico
+Proyecto Integrador Básico,codigo,3,3.0,6.75,jueves,tarde,sintetico
+Proyecto Integrador Básico,estudio,3,3.0,3.25,viernes,noche,sintetico
+Cálculo I,estudio,1,2.5,4.25,martes,noche,sintetico
+Estadística y Probabilidad,estudio,4,3.5,5.5,martes,noche,sintetico
+Proyecto Integrador Profesional,presentacion,1,3.5,3.75,jueves,tarde,sintetico
+Computación Móvil,taller,5,3.0,10.0,martes,noche,sintetico
+Electiva de Especialización V,taller,2,2.0,2.0,lunes,tarde,sintetico
+Ingeniería de Software II,codigo,2,5.0,8.5,lunes,tarde,sintetico
+Electiva de Profundización IV,lectura,2,2.0,3.75,domingo,tarde,sintetico
+Inglés I,estudio,4,3.5,4.5,lunes,noche,sintetico
+Arquitectura de Computadores,presentacion,3,3.5,5.25,domingo,noche,sintetico
+Seguridad en Redes,informe,2,2.5,3.25,lunes,noche,sintetico
+Arquitectura Empresarial,informe,3,4.0,7.25,jueves,noche,sintetico
+Estructura de Datos,taller,3,2.0,3.75,domingo,noche,sintetico
+Constitución Política,lectura,4,3.0,2.75,viernes,manana,sintetico
+Álgebra Lineal,taller,3,2.5,5.0,sabado,tarde,sintetico
+Razonamiento Cuantitativo,taller,3,3.5,4.75,miercoles,tarde,sintetico
+Lenguajes de Programación,taller,4,2.5,2.75,miercoles,tarde,sintetico
+Ecuaciones Diferenciales,estudio,4,6.0,10.75,martes,tarde,sintetico
+Gobierno y Servicios de TI,estudio,5,6.5,9.5,viernes,tarde,sintetico
+Arquitectura de Tecnología de Información,informe,3,3.0,4.75,lunes,noche,sintetico
+Sistemas Operativos,estudio,4,4.0,11.75,sabado,noche,sintetico
+Electiva de Profundización IV,presentacion,3,5.0,9.0,lunes,noche,sintetico
+Proyecto Integrador Básico,lectura,4,2.5,3.75,lunes,manana,sintetico
+Electiva de Profundización II,presentacion,3,2.0,2.25,sabado,manana,sintetico
+Inglés IV,lectura,4,2.0,2.5,lunes,noche,sintetico
+Razonamiento Cuantitativo,estudio,3,8.0,7.5,jueves,manana,sintetico
+Programación Orientada a la Web,codigo,3,2.0,5.25,viernes,noche,sintetico
+Algoritmos y Programación I,codigo,4,7.5,22.0,martes,noche,sintetico
+Proyecto Integrador Básico,presentacion,5,2.0,4.75,domingo,noche,sintetico
+Gestión de Proyectos de TI,taller,3,3.0,5.5,jueves,tarde,sintetico
+Electiva de Profundización I,codigo,3,3.0,7.5,domingo,tarde,sintetico
+Física y Laboratorio II,informe,4,3.5,9.0,sabado,noche,sintetico
+Fundamentos de Sistemas de Información,presentacion,4,3.5,5.0,miercoles,noche,sintetico
+Matemáticas Discretas,taller,4,2.0,5.25,domingo,noche,sintetico
+Inglés I,lectura,4,2.5,2.75,miercoles,tarde,sintetico
+Arquitectura Empresarial,informe,2,2.5,4.75,miercoles,noche,sintetico
+Proyecto Integrador Profesional,lectura,4,1.5,1.5,viernes,tarde,sintetico
+Inglés II,lectura,4,3.0,3.25,viernes,noche,sintetico
+Inteligencia Artificial,estudio,3,4.0,9.5,sabado,noche,sintetico
+Bases de Datos,codigo,3,3.0,6.5,martes,tarde,sintetico
+Matemáticas Discretas,presentacion,4,2.5,5.25,domingo,manana,sintetico
+Electiva de Profundización II,lectura,3,1.0,1.75,viernes,noche,sintetico
+Inglés IV,taller,2,5.5,5.5,domingo,noche,sintetico
+Inglés II,taller,4,2.5,3.0,martes,tarde,sintetico
+Inglés III,lectura,3,1.0,1.0,lunes,noche,sintetico
+Electiva de Área I,estudio,3,3.5,4.0,martes,manana,sintetico
+Electiva de Profundización III,taller,4,2.5,4.25,lunes,tarde,sintetico
+Programación Orientada a la Web,codigo,5,2.5,8.25,martes,noche,sintetico
+Constitución Política,estudio,4,2.5,3.75,martes,noche,sintetico
+Computación Móvil,informe,4,2.0,3.75,jueves,noche,sintetico
+Redes y Comunicaciones,estudio,4,5.0,9.0,domingo,noche,sintetico
+Autómatas y Lenguajes Formales,estudio,4,6.0,13.0,viernes,tarde,sintetico
+Inglés IV,estudio,3,4.5,5.5,jueves,noche,sintetico
+Cálculo II,taller,3,2.5,4.25,domingo,tarde,sintetico
+Cálculo I,taller,4,3.0,6.5,martes,manana,sintetico
+Ecuaciones Diferenciales,estudio,2,2.5,3.0,martes,tarde,sintetico
+Constitución Política,informe,2,5.0,6.75,sabado,noche,sintetico
+Razonamiento Cuantitativo,taller,2,5.5,11.5,viernes,noche,sintetico
+Lenguajes de Programación,codigo,2,5.5,13.5,lunes,tarde,sintetico
+Programación Orientada a la Web,taller,3,1.5,3.0,martes,noche,sintetico
+Autómatas y Lenguajes Formales,codigo,3,2.5,7.0,lunes,noche,sintetico
+Investigación de Operaciones,estudio,4,2.5,4.0,miercoles,noche,sintetico
+Pensamiento Sistémico,informe,2,5.0,9.5,jueves,noche,sintetico
+Constitución Política,estudio,4,4.0,5.25,jueves,noche,sintetico
+Razonamiento Cuantitativo,taller,3,2.0,4.25,miercoles,tarde,sintetico
+Investigación de Operaciones,estudio,4,4.5,7.0,martes,manana,sintetico
+Lenguajes de Programación,codigo,3,4.0,7.25,miercoles,tarde,sintetico
+Ingeniería de Software I,lectura,4,1.5,2.5,viernes,tarde,sintetico
+Razonamiento Cuantitativo,taller,4,2.0,3.0,lunes,tarde,sintetico
+Cálculo II,estudio,1,2.0,1.75,lunes,manana,sintetico
+Física y Laboratorio I,taller,2,2.0,1.75,martes,manana,sintetico
+Ecuaciones Diferenciales,taller,4,3.0,6.0,jueves,tarde,sintetico
+Inglés III,taller,3,5.0,4.75,lunes,noche,sintetico
+Constitución Política,informe,4,2.5,4.75,domingo,tarde,sintetico
+Física y Laboratorio I,estudio,3,4.0,6.0,miercoles,noche,sintetico
+Inglés II,informe,4,2.0,3.25,domingo,noche,sintetico
+Razonamiento Cuantitativo,estudio,4,7.0,14.5,jueves,manana,sintetico
+Seguridad en Redes,estudio,5,5.0,7.25,lunes,manana,sintetico
+Arquitectura de Computadores,codigo,4,12.0,22.5,lunes,noche,sintetico
+Razonamiento Cuantitativo,taller,5,3.5,5.0,viernes,noche,sintetico
+Proyecto Integrador Profesional,informe,1,1.0,1.0,miercoles,manana,sintetico
+Física y Laboratorio I,informe,3,4.0,8.75,sabado,tarde,sintetico
+Introducción a la Ingeniería,presentacion,3,2.5,3.75,domingo,noche,sintetico
+Programación Orientada a la Web,lectura,3,1.0,1.25,jueves,manana,sintetico
+Arquitectura Empresarial,codigo,3,5.5,8.75,lunes,tarde,sintetico
+Álgebra Lineal,taller,2,2.5,5.0,viernes,noche,sintetico
+Electiva de Profundización IV,presentacion,4,5.0,8.75,jueves,noche,sintetico
+Álgebra Lineal,taller,5,5.5,9.5,viernes,noche,sintetico
+Inglés IV,lectura,3,1.0,1.0,lunes,noche,sintetico
+Algoritmos y Programación II,codigo,3,3.5,6.5,miercoles,tarde,sintetico
+Electiva de Profundización II,informe,4,1.0,1.5,domingo,noche,sintetico
+Matemáticas Discretas,estudio,2,5.5,6.75,lunes,manana,sintetico
+Fundamentos de Sistemas de Información,presentacion,3,3.0,5.5,miercoles,noche,sintetico
+Computación Móvil,informe,4,3.0,4.0,domingo,tarde,sintetico
+Arquitectura de Computadores,codigo,4,4.5,14.0,jueves,manana,sintetico
+Matemáticas Fundamentales,taller,3,2.5,2.5,viernes,manana,sintetico
+Algoritmos y Programación II,codigo,5,6.5,17.25,domingo,manana,sintetico
+Electiva de Profundización III,presentacion,3,2.0,2.75,miercoles,tarde,sintetico
+Redes Inalámbricas,informe,3,3.0,5.25,domingo,manana,sintetico
+Arquitectura de Computadores,lectura,4,3.0,4.0,viernes,manana,sintetico
+Cálculo II,taller,5,6.5,12.5,viernes,noche,sintetico
+Arquitectura Empresarial,informe,5,3.0,7.75,miercoles,tarde,sintetico
+Matemáticas Discretas,estudio,1,3.0,2.5,sabado,noche,sintetico
+Algoritmos y Programación I,taller,4,2.5,4.0,viernes,manana,sintetico
+Gobierno y Servicios de TI,taller,2,3.5,4.75,sabado,tarde,sintetico
+Análisis de Algoritmos,estudio,1,5.5,8.0,domingo,noche,sintetico
+Fundamentos de Sistemas de Información,taller,3,1.5,2.0,lunes,noche,sintetico
+Gestión de Proyectos de TI,codigo,4,5.0,13.5,sabado,tarde,sintetico
+Introducción a la Ingeniería,taller,3,2.5,5.25,domingo,noche,sintetico
+Arquitectura de Tecnología de Información,informe,3,2.5,4.5,viernes,tarde,sintetico
+Arquitectura Empresarial,taller,4,2.0,2.25,miercoles,manana,sintetico
+Física y Laboratorio II,estudio,2,3.0,3.25,lunes,tarde,sintetico
+Arquitectura de Software,estudio,3,4.0,5.75,lunes,noche,sintetico
+Introducción a la Ingeniería,taller,3,2.0,3.75,miercoles,noche,sintetico
+Inglés III,estudio,4,3.0,4.25,viernes,noche,sintetico
+Álgebra Lineal,taller,4,2.0,3.5,viernes,manana,sintetico
+Electiva de Profundización II,presentacion,4,2.0,3.75,lunes,noche,sintetico
+Pensamiento Sistémico,codigo,2,3.0,7.0,sabado,manana,sintetico
+Programación Orientada a la Web,presentacion,2,3.0,4.0,viernes,noche,sintetico
+Proyecto Integrador Básico,presentacion,4,2.5,4.75,lunes,manana,sintetico
+Investigación de Operaciones,lectura,2,2.0,3.25,martes,manana,sintetico
+Algoritmos y Programación II,taller,4,2.5,3.75,domingo,manana,sintetico
+Arquitectura de Tecnología de Información,codigo,3,5.0,10.75,viernes,noche,sintetico
+Ingeniería de Software II,estudio,3,4.5,8.5,domingo,noche,sintetico
+Electiva de Profundización II,informe,2,2.0,3.5,miercoles,manana,sintetico
+Álgebra Lineal,estudio,5,12.0,19.25,viernes,manana,sintetico
+Gobierno y Servicios de TI,taller,3,2.5,5.5,martes,noche,sintetico
+Estadística y Probabilidad,estudio,2,3.5,3.75,lunes,manana,sintetico
+Álgebra Lineal,taller,3,2.0,3.0,jueves,manana,sintetico
+Autómatas y Lenguajes Formales,taller,4,3.0,4.75,domingo,tarde,sintetico
+Gestión de Proyectos de TI,taller,2,3.0,5.25,domingo,noche,sintetico
+Lenguajes de Programación,codigo,1,3.5,7.75,domingo,noche,sintetico
+Redes Inalámbricas,presentacion,2,3.0,4.5,lunes,tarde,sintetico
+Matemáticas Fundamentales,estudio,2,2.5,2.25,lunes,tarde,sintetico
+Inglés IV,estudio,2,5.5,4.0,martes,manana,sintetico
+Álgebra Lineal,estudio,3,6.0,9.0,viernes,noche,sintetico
+Algoritmos y Programación II,taller,3,3.0,5.75,miercoles,manana,sintetico
+Álgebra Lineal,estudio,3,3.0,5.5,martes,tarde,sintetico
+Ingeniería de Software I,estudio,4,6.0,12.75,miercoles,tarde,sintetico
+Bases de Datos,codigo,1,2.5,3.25,sabado,manana,sintetico
+Autómatas y Lenguajes Formales,presentacion,2,1.5,2.0,martes,manana,sintetico
+Arquitectura de Tecnología de Información,informe,4,4.0,10.25,viernes,noche,sintetico
+Autómatas y Lenguajes Formales,informe,2,2.0,3.5,miercoles,manana,sintetico
+Ecuaciones Diferenciales,taller,3,1.5,3.25,lunes,noche,sintetico
+Electiva de Profundización IV,presentacion,3,3.5,4.5,miercoles,tarde,sintetico
+Arquitectura de Software,informe,5,3.0,6.75,lunes,tarde,sintetico
+Gobierno y Servicios de TI,lectura,5,2.0,1.75,miercoles,noche,sintetico
+Arquitectura de Software,estudio,2,3.5,4.5,jueves,noche,sintetico
+Electiva de Profundización III,informe,2,1.5,1.75,lunes,tarde,sintetico
+Redes y Comunicaciones,lectura,4,2.5,3.25,jueves,noche,sintetico
+Estructura de Datos,codigo,4,3.0,7.0,viernes,tarde,sintetico
+Inglés III,lectura,4,2.0,2.5,lunes,manana,sintetico
+Bases de Datos,codigo,3,8.0,23.75,jueves,noche,sintetico
+Introducción a la Ingeniería,presentacion,4,3.5,5.0,miercoles,noche,sintetico
+Electiva de Profundización VI,presentacion,4,3.0,6.0,jueves,tarde,sintetico
+Física y Laboratorio II,informe,2,3.5,4.5,domingo,noche,sintetico
+Matemáticas Discretas,estudio,4,5.0,10.25,viernes,noche,sintetico
+Pensamiento Sistémico,presentacion,3,2.5,2.5,domingo,tarde,sintetico
+Programación Orientada a la Web,taller,3,3.0,3.75,viernes,manana,sintetico
+Autómatas y Lenguajes Formales,estudio,4,5.5,7.5,viernes,noche,sintetico
+Fundamentos de Sistemas de Información,lectura,3,1.0,1.25,viernes,tarde,sintetico
+Arquitectura de Software,presentacion,2,1.0,1.5,domingo,noche,sintetico
+Algoritmos y Programación II,lectura,3,0.5,0.75,jueves,manana,sintetico
+Investigación de Operaciones,taller,2,2.0,3.25,martes,noche,sintetico
+Arquitectura de Software,taller,1,1.5,2.0,sabado,noche,sintetico
+Introducción a la Ingeniería,presentacion,3,2.5,4.0,lunes,noche,sintetico
+Algoritmos y Programación I,codigo,2,4.5,8.5,sabado,manana,sintetico
+Algoritmos y Programación I,codigo,2,2.0,3.25,sabado,tarde,sintetico
+Inglés IV,lectura,4,1.5,1.25,jueves,noche,sintetico
+Electiva de Área I,presentacion,4,4.0,4.75,domingo,tarde,sintetico
+Arquitectura Empresarial,estudio,5,4.5,4.25,jueves,tarde,sintetico
+Razonamiento Cuantitativo,taller,3,2.5,4.5,viernes,noche,sintetico
+Electiva de Área I,lectura,4,1.5,2.5,sabado,manana,sintetico
+Introducción a la Ingeniería,lectura,3,2.0,4.0,jueves,noche,sintetico
+Arquitectura de Computadores,presentacion,4,3.0,4.25,viernes,noche,sintetico
+Electiva de Profundización II,lectura,3,3.0,5.25,martes,tarde,sintetico
+Arquitectura de Computadores,lectura,3,1.5,1.5,miercoles,manana,sintetico
+Electiva de Profundización VI,informe,3,4.0,9.75,jueves,tarde,sintetico
+Inglés II,taller,2,1.5,1.5,sabado,manana,sintetico
+Proyecto Integrador Profesional,presentacion,2,1.5,2.25,jueves,tarde,sintetico
+Electiva de Profundización VI,informe,1,3.5,3.5,domingo,noche,sintetico
+Algoritmos y Programación II,taller,4,3.5,4.0,jueves,tarde,sintetico
+Electiva de Área I,estudio,3,5.5,9.5,jueves,noche,sintetico
+Ecuaciones Diferenciales,estudio,4,4.5,8.75,sabado,noche,sintetico
+Proyecto Integrador de Grado,taller,2,2.5,4.5,lunes,tarde,sintetico
+Electiva de Área I,estudio,4,5.5,8.25,martes,noche,sintetico
+Arquitectura de Computadores,presentacion,2,4.0,5.25,sabado,tarde,sintetico
+Análisis de Algoritmos,estudio,2,2.5,3.25,miercoles,noche,sintetico
+Arquitectura de Tecnología de Información,presentacion,3,2.0,3.75,domingo,noche,sintetico
+Fundamentos de Sistemas de Información,lectura,4,1.5,2.0,lunes,noche,sintetico
+Física y Laboratorio II,informe,5,2.0,3.5,martes,noche,sintetico
+Matemáticas Fundamentales,estudio,3,4.5,7.5,domingo,tarde,sintetico
+Estructura de Datos,codigo,3,3.0,7.0,domingo,tarde,sintetico
+Proyecto Integrador Básico,presentacion,3,2.0,5.0,jueves,noche,sintetico
+Investigación de Operaciones,estudio,4,3.0,7.25,domingo,noche,sintetico

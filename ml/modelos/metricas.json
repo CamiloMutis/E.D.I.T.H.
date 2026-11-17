@@ -1,0 +1,21 @@
+{
+  "predictor": {
+    "modelo": "Gradient Boosting",
+    "filas": 600,
+    "fuentes": {
+      "sintetico": 600
+    },
+    "MAE": 1.0922950234017936,
+    "RMSE": 1.5782737865613703,
+    "R2": 0.8118899803084694,
+    "MAE_linea_base": 2.35625,
+    "reduccion_error": 0.5364265152671432
+  },
+  "clasificador": {
+    "modelo": "Naive Bayes",
+    "documentos": 2640,
+    "materias": 44,
+    "accuracy": 0.9943181818181818,
+    "F1_macro": 0.994308300395257
+  }
+}
