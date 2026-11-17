@@ -26,4 +26,4 @@ sino que dirige tu semestre como un orquestador:
 - 📅 **Planea** cada entrega hacia atrás y reserva bloques de trabajo en tu Google Calenda
 - 🧠 **Predice** cuánto te vas a demorar *de verdad*, con un modelo de ML entrenado sobre t
 - 📁 **Organiza** tus archivos por materia con un clasificador entrenado.
-- 🔁 **Corrige el rumbo** cada noche: si te atrasaste, reacomoda tu semana y te avisa qu
+- 🔁 **Corrige el rumbo** cada noche: si te atrasaste, reacomoda tu semana y te avisa qué entregas están en riesgo.
