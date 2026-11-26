@@ -3,7 +3,7 @@ openai==3.52.0
 anthropic==2.9.0
 
 # Interfaz y tareas programadas
-python-telegram-bot[job-queue]==22.8
+python-telegram-bot[job-queue,webhooks]==22.8
 
 # Google Calendar
 google-api-python-client==2.202.0
@@ -23,5 +23,7 @@ joblib==1.6.0
 
 # Configuración
 python-dotenv==1.2.4
+cryptography==50.0.2
+httpx==0.28.1
 PyYAML==6.0.3
 tzdata==2026.6

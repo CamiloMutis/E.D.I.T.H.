@@ -30,7 +30,7 @@ sino que dirige tu semestre como un orquestador:
 
 ## Cómo trabaja
 
-Se le habla por Telegram y actúa sobre el calendario, la carpeta de archivos y una base de datos propia. Cada frente tiene su skill:
+Se le habla por Telegram y actúa sobre el calendario, la carpeta de archivos y una base de datos propia. Un mismo bot atiende a varios estudiantes: cada uno se registra desde el chat, conecta su Moodle y tiene su propia base de datos, sus archivos y su memoria de conversación. Cada frente tiene su skill:
 
 | Frente | Skill | Qué hace |
 |---|---|---|
@@ -129,9 +129,10 @@ Si PowerShell bloquea la activación, ejecuta antes `Set-ExecutionPolicy -Scope 
 Todo el proyecto funciona sin costo. Las llaves van en el archivo `.env`, que nunca se sube al repositorio.
 
 1. **Telegram.** Habla con [@BotFather](https://t.me/BotFather), envía `/newbot` y copia el token en `TELEGRAM_BOT_TOKEN`.
-2. **LLM.** Crea una llave gratuita en [console.groq.com](https://console.groq.com) y cópiala en `GROQ_API_KEY`. Si tienes llave de Claude o de GPT, puedes usarlas con `LLM_PROVIDER=anthropic` u `openai`; el resto del sistema no cambia.
-3. **Google Calendar (opcional).** En [Google Cloud Console](https://console.cloud.google.com) crea un proyecto, habilita Google Calendar API, crea una credencial OAuth de tipo "Aplicación de escritorio" y guarda el archivo como `credentials.json` en la raíz. La primera ejecución abre el navegador para autorizar. Sin este archivo, E.D.I.T.H. usa un calendario local guardado en SQLite.
-4. **Reglas.** En `config.yaml` se ajustan el semestre, las horas máximas de estudio por día, la franja horaria, el margen antes de cada entrega y las carpetas. En Windows y en Linux la carpeta de descargas por defecto es `~/Downloads`.
+2. **LLM.** Crea una llave gratuita en [console.groq.com](https://console.groq.com) y cópiala en `GROQ_API_KEY`. Recomendado: crea también una llave gratuita de Gemini en [aistudio.google.com/apikey](https://aistudio.google.com/apikey) y ponla en `GEMINI_API_KEY`; si Groq llega a su límite, E.D.I.T.H. sigue con Gemini sin que el estudiante lo note y vuelve a Groq a los 5 minutos. Si tienes llave de Claude o de GPT, puedes usarlas con `LLM_PROVIDER=anthropic` u `openai`.
+3. **Administrador.** Pon tu id de Telegram (te lo da [@userinfobot](https://t.me/userinfobot)) en `TELEGRAM_ADMIN_ID`: tendrás `/admin`, `/anuncio` y `/reentrenar` y te llegarán los avisos de errores.
+4. **Google Calendar (opcional, solo modo consola).** En [Google Cloud Console](https://console.cloud.google.com) crea un proyecto, habilita Google Calendar API, crea una credencial OAuth de tipo "Aplicación de escritorio" y guarda el archivo como `credentials.json` en la raíz. La primera ejecución abre el navegador para autorizar. Sin este archivo, E.D.I.T.H. usa un calendario local guardado en SQLite.
+5. **Reglas.** En `config.yaml` se ajustan el semestre, las horas máximas de estudio por día, la franja horaria, el margen antes de cada entrega y las carpetas. En Windows y en Linux la carpeta de descargas por defecto es `~/Downloads`.
 
 Las materias salen del pénsum de Ingeniería de Sistemas (`data/pensum.json`). Al arrancar quedan activas las del semestre indicado en `config.yaml`; se cambia en cualquier momento con `/semestre N`.
 
@@ -141,23 +142,39 @@ Las materias salen del pénsum de Ingeniería de Sistemas (`data/pensum.json`). 
 python main.py
 ```
 
-Escríbele `/start` a tu bot. Desde ahí se le habla en lenguaje natural o con comandos:
+Cada estudiante le escribe `/start` al bot y E.D.I.T.H. lo guía en un minuto:
+
+1. Le explica qué datos guarda y pide que acepte (proyecto académico, Ley 1581 de 2012).
+2. Le pregunta el semestre.
+3. Le pide su usuario y su contraseña de Moodle. **La contraseña se usa una sola vez** para pedirle a Moodle un permiso de acceso (token); el mensaje con la contraseña se borra del chat y solo queda el token, cifrado con `EDITH_CLAVE_MAESTRA`. Se puede saltar y conectar después con `/conectar_moodle`.
+
+Desde ahí se le habla en lenguaje natural o con comandos:
 
 | Comando | Qué hace |
 |---|---|
 | `/hoy` | Plan del día: bloques, entregas de la semana y archivos relacionados |
 | `/pendientes` | Entregas abiertas con su nivel de riesgo |
 | `/revisar_dia` | Pregunta cómo te fue con los bloques de hoy y reorganiza la semana |
-| `/semestre N` | Cambia el semestre y, con él, las materias activas |
-| `/materias` | Materias activas |
 | `/moodle` | Revisa Moodle ahora: tareas nuevas, fechas cambiadas y lo que está por vencer |
-| `/reentrenar` | Reentrena los modelos con tus datos |
+| `/calendario` | Envía tu plan (bloques, entregas y vencimientos de Moodle) como archivo `.ics` para Google Calendar u Outlook |
+| `/semestre N` · `/materias` | Cambia el semestre y, con él, las materias activas |
+| `/pausar` | Pausa resúmenes, revisiones y avisos de Moodle: `/pausar`, `/pausar 3h`, `/pausar 2d`, `/pausar 1s`, `/pausar hasta 30/11` |
+| `/reanudar` | Vuelve a enviar avisos y revisa Moodle de inmediato |
+| `/ajustes` | Horas de estudio por día, hora del resumen y de la revisión, horario de avisos de Moodle |
+| `/estado` | Qué está conectado, si estás en pausa y cuántos mensajes llevas hoy |
+| `/conectar_moodle` · `/desconectar_moodle` | Conecta, reconecta o borra el acceso a Moodle |
+| `/mis_datos` | Descarga en un `.zip` todo lo que E.D.I.T.H. guarda de ti |
+| `/olvidarme` | Borra tu cuenta, tus datos y tus archivos |
 
-Sin que se lo pidas, E.D.I.T.H. envía un resumen a las 7:00 a. m., hace la revisión a las 10:00 p. m. y reentrena el modelo de tiempos los domingos. También organiza cualquier PDF, Word o PowerPoint que aparezca en la carpeta de descargas o que le envíes por el chat.
+Sin que se lo pidas, E.D.I.T.H. envía a cada estudiante el resumen de la mañana y la revisión de la noche a la hora que eligió (por defecto 7:00 a. m. y 10:00 p. m.). Si el bot estuvo apagado a esa hora, lo envía al volver, hasta dos horas tarde. Los modelos se reentrenan cada domingo con lo que aportan todos los estudiantes. También organiza cualquier PDF, Word o PowerPoint que le envíes por el chat, en la carpeta de cada estudiante.
+
+Para la prueba, cada estudiante tiene un tope de mensajes conversados al día (`bot.limite_mensajes_dia` en `config.yaml`, 80 por defecto); los comandos no cuentan. Con `EDITH_CODIGO_INVITACION` en `.env`, solo se registra quien conozca el código.
+
+**Datos.** Todo queda en `data/` (o en `EDITH_DATOS`): `cuentas.db` con las cuentas, `usuarios/<id de Telegram>/` con la base y los archivos de cada estudiante, y `clave_maestra` si no definiste `EDITH_CLAVE_MAESTRA`. Si antes usabas E.D.I.T.H. solo, al arrancar tus entregas, tu plan y tu Moodle pasan a tu cuenta automáticamente.
 
 ### Vigilancia de Moodle
 
-Si `MOODLE_URL`, `MOODLE_USUARIO` y `MOODLE_CLAVE` están en `.env`, E.D.I.T.H. revisa el calendario de Moodle cada 15 minutos entre las 6:00 a. m. y las 10:00 p. m. y avisa por Telegram cuando:
+Para cada estudiante con Moodle conectado, E.D.I.T.H. revisa el calendario de Moodle cada 15 minutos dentro de su horario de avisos (6:00 a. m. a 10:00 p. m. por defecto) y avisa por Telegram cuando:
 
 - un profesor publica una tarea nueva (y si aún no abre, desde cuándo se puede entregar),
 - se abre una tarea o un quiz que estaba cerrado,
@@ -165,13 +182,13 @@ Si `MOODLE_URL`, `MOODLE_USUARIO` y `MOODLE_CLAVE` están en `.env`, E.D.I.T.H. 
 - una entrega está a 72, 24 o 3 horas de vencer (cada aviso se envía una sola vez),
 - el profesor sube contenido nuevo al curso (diapositivas, lecturas…) con la opción "notificar cambio de contenido".
 
-Consulta el estado de cada entrega: **lo que ya entregaste no se recuerda** (en quices, cuenta un intento terminado), avisa si dejaste un borrador sin enviar y confirma una vez cuando detecta que entregaste.
+Consulta el estado de cada entrega: **lo que ya entregaste no se recuerda** (en quices, cuenta un intento terminado), avisa si dejaste un borrador sin enviar y confirma una vez cuando detecta que entregaste. Si el acceso deja de funcionar (por ejemplo, porque cambiaste la contraseña), avisa una vez y pide reconectar con `/conectar_moodle`.
 
-Moodle no ofrece webhooks para estudiantes, por eso la detección es por consulta periódica. La primera revisión solo registra lo existente, sin anunciarlo como nuevo. El intervalo, el horario, los umbrales y el aviso de contenido nuevo se cambian en la sección `moodle` de `config.yaml`. La consulta en lenguaje natural ("¿qué tengo en Moodle esta semana?", "¿ya entregué el plan de pruebas?") también funciona desde el chat.
+Moodle no ofrece webhooks para estudiantes, por eso la detección es por consulta periódica, un estudiante a la vez para no saturar la plataforma. La primera revisión solo registra lo existente, sin anunciarlo como nuevo. La consulta en lenguaje natural ("¿qué tengo en Moodle esta semana?", "¿ya entregué el plan de pruebas?") también funciona desde el chat.
 
-### Dejarlo corriendo (Linux)
+### Despliegue
 
-Los avisos solo llegan mientras el bot está en marcha. Para no depender de una terminal abierta, instálalo como servicio de usuario de systemd (no necesita sudo):
+Los avisos solo llegan mientras el bot está en marcha. La guía [`docs/despliegue.md`](docs/despliegue.md) explica, paso a paso, las opciones gratuitas: una VM gratuita de Google Cloud con Docker (`docker compose up -d --build`), Render en modo webhook (`EDITH_WEBHOOK_URL`) o tu propio computador. En un computador con Linux basta con el servicio de usuario de systemd:
 
 ```bash
 scripts/servicio.sh instalar             # arranca ya y cada vez que inicias sesión
@@ -181,7 +198,7 @@ scripts/servicio.sh logs                 # ver lo que está haciendo
 scripts/servicio.sh desinstalar
 ```
 
-Si se cae (sin internet, Moodle no responde), systemd lo reinicia a los 30 segundos. Si el equipo estuvo suspendido, al volver avisa lo que se haya perdido: aperturas y recordatorios no se saltan. Mientras el servicio corre, no ejecutes también `python main.py`: Telegram no permite dos instancias del mismo bot a la vez. Para que funcione con el equipo apagado hay que instalarlo en un servidor (un VPS o una Raspberry Pi) con los mismos pasos.
+Solo puede correr una copia del bot por token de Telegram: mientras el servicio o el contenedor corren, no ejecutes también `python main.py`.
 
 ### Sin Telegram
 
@@ -189,7 +206,7 @@ Si se cae (sin internet, Moodle no responde), systemd lo reinicia a los 30 segun
 python main.py --consola
 ```
 
-Abre una conversación con el agente en la terminal. Los comandos `/hoy`, `/pendientes`, `/revisar_dia` y `/archivo RUTA` funcionan incluso sin llave de LLM.
+Abre una conversación con el agente en la terminal, para un solo usuario: usa la base de `config.yaml: base_de_datos` y las credenciales de Moodle de `.env`. Los comandos `/hoy`, `/pendientes`, `/revisar_dia` y `/archivo RUTA` funcionan incluso sin llave de LLM.
 
 ### Escenario de demostración
 
@@ -206,7 +223,7 @@ pip install -r requirements-dev.txt
 python -m pytest
 ```
 
-Las pruebas cubren el planificador (día lleno, entrega imposible, bloques que no caben, tope diario, margen), los skills, la organización de archivos, el bucle del agente con un LLM simulado, los adaptadores de cada proveedor y el bot sin conexión. Se ejecutan en Linux y en Windows con cada cambio.
+Las pruebas cubren el planificador (día lleno, entrega imposible, bloques que no caben, tope diario, margen), los skills, la organización de archivos, el bucle del agente con un LLM simulado, los adaptadores de cada proveedor y el respaldo con Gemini, el bot sin conexión, el registro guiado, la pausa, las rutinas por estudiante, el cifrado del token de Moodle y que los datos de un estudiante no se vean desde otro. Se ejecutan en Linux y en Windows con cada cambio.
 
 Para reentrenar los modelos desde cero y volver a generar las métricas:
 
@@ -217,33 +234,39 @@ python -m ml.entrenar --regenerar
 ## Estructura
 
 ```
-├── main.py                   arranca el bot y las rutinas programadas
-├── arranque.py               ensambla base de datos, modelos, calendario y agente
+├── main.py                   arranca el bot (polling o webhook) o la consola
+├── arranque.py               ensambla el contexto del modo consola
+├── usuarios.py               sesión de cada estudiante: su base, su Moodle y su agente
 ├── ajustes.py                lee config.yaml y .env
 ├── config.yaml               reglas del usuario
 ├── agente/
 │   ├── orquestador.py        bucle del agente
 │   ├── herramientas.py       esquemas JSON de los skills
-│   ├── llm.py                adaptador común: Groq, Claude y GPT
+│   ├── llm.py                adaptador común: Groq, Gemini, Claude y GPT, con respaldo automático
 │   └── prompts.py            prompt de sistema y plantillas
 ├── skills/                   los cuatro skills y las herramientas de soporte
 ├── planificador/scheduler.py algoritmo voraz de asignación de bloques
 ├── integraciones/            Telegram, Google Calendar, calendario local, vigilante
 ├── ml/                       entrenamiento, modelos guardados y generación de datos
 ├── notebooks/                datos, predictor y clasificador, ejecutados con salidas
-├── db/                       esquema SQL y acceso a datos
+├── db/                       esquema SQL, acceso a datos y cuentas (token cifrado)
 ├── data/                     pénsum y datasets de arranque
 ├── docs/encuesta.md          formulario para recolectar datos reales
 ├── scripts/preparar_demo.py  escenario de demostración
 ├── scripts/servicio.sh       deja el bot corriendo como servicio de systemd
+├── scripts/desplegar_vm.sh   instala y arranca el bot con Docker en una VM
+├── Dockerfile, docker-compose.yml   imagen y despliegue con Docker
+├── docs/despliegue.md        cómo desplegarlo gratis
 └── tests/                    pruebas con pytest
 ```
 
 ## Limitaciones
 
 - Los modelos incluidos están entrenados con datos sintéticos. Sus métricas no valen como resultado final hasta repetir el entrenamiento con la encuesta y con archivos reales.
-- El plan gratuito de Groq limita las solicitudes por minuto y por día. El agente hace pocas llamadas y reintenta con espera, pero un uso intenso puede toparse con el límite.
-- Está pensado para un solo estudiante por instalación: el bot responde únicamente al primer chat que le escribe `/start`.
+- Los planes gratuitos de Groq y Gemini limitan las solicitudes por minuto y por día. Con las dos llaves, cuando Groq se agota sigue Gemini; si los dos se agotan, funcionan los comandos pero no la conversación.
+- La base de datos es SQLite, una por estudiante. Alcanza para una prueba con decenas de estudiantes; para toda la universidad convendría PostgreSQL y varias instancias.
+- En el servidor cada estudiante usa el calendario interno; a Google Calendar u Outlook llega con `/calendario` (un archivo que hay que volver a importar cuando cambia el plan), no con sincronización automática.
+- Consultar Moodle con el acceso de los estudiantes debería acordarse con la oficina de TI de la universidad antes de un uso abierto.
 - El planificador es voraz: encuentra un buen plan, no necesariamente el óptimo.
 - Los PDF escaneados sin texto no se pueden clasificar por contenido; en ese caso pregunta.
 
@@ -251,6 +274,9 @@ python -m ml.entrenar --regenerar
 
 - Leer el programa de cada materia y extraer fechas y porcentajes de forma automática.
 - Calcular la nota necesaria en lo que falta del semestre y usarla en la prioridad.
-- Importar entregas desde la plataforma académica de la universidad.
+- Convertir cada tarea nueva de Moodle en una entrega planificada con un botón.
+- Notas de Moodle: "¿cómo voy en Redes?" y cuánto se necesita en el final.
+- Descargar y organizar solo el material que suben los profesores.
+- Mensajes de voz.
 - Reemplazar el algoritmo voraz por un optimizador con restricciones (OR-Tools).
 - Ajustar un modelo de tiempos personal sobre el modelo general.

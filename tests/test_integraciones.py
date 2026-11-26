@@ -7,14 +7,13 @@ from datetime import timedelta
 import pytest
 
 from agente.llm import ErrorLLM
-from agente.orquestador import Agente
 from ajustes import RAIZ, cargar_ajustes
 from integraciones.telegram_bot import BotEdith, _trozos
 from integraciones.vigilante_archivos import VigilanteArchivos
 from skills import soporte
 from skills.agenda import fecha
 from skills.planificar_entrega import planificar_entrega
-from tests.conftest import AHORA
+from tests.conftest import AHORA, registrar
 from tests.test_archivos import TEXTO_AJENO, TEXTO_SO
 from tests.test_skills import SUBTAREAS
 
@@ -32,24 +31,30 @@ class ConsultaFalsa:
     def __init__(self):
         self.textos = []
 
-    async def edit_message_text(self, texto):
+    async def edit_message_text(self, texto, reply_markup=None):
         self.textos.append(texto)
 
 
-@pytest.fixture
-def bot(ctx, monkeypatch):
-    monkeypatch.delenv("TELEGRAM_CHAT_ID", raising=False)
-    # Otras pruebas cargan .env; sin esto la rutina de Moodle aparecería según el orden.
-    monkeypatch.delenv("MOODLE_URL", raising=False)
-    ctx.repo.fijar_preferencia("chat_id", "42")
-    bot = BotEdith(ctx, Agente(ctx, SinLLM()), "123456:token-de-prueba")
+def bot_de_prueba(gestor) -> BotEdith:
+    """Bot que, en lugar de enviar a Telegram, guarda (destinatario, texto, botones)."""
+    bot = BotEdith(gestor, "123456:token-de-prueba", admin_id=1)
     bot.enviados = []
 
-    async def enviar(texto, botones=None):
-        bot.enviados.append((texto, botones))
+    async def enviar(telegram_id, texto, botones=None):
+        bot.enviados.append((telegram_id, texto, botones))
 
     bot.enviar = enviar
     return bot
+
+
+@pytest.fixture
+def sesion(gestor):
+    return registrar(gestor, 42)
+
+
+@pytest.fixture
+def bot(gestor, sesion):
+    return bot_de_prueba(gestor)
 
 
 def _con_entrega(ctx):
@@ -61,65 +66,77 @@ def _con_entrega(ctx):
 def test_el_bot_registra_comandos_y_rutinas(bot):
     app = bot.construir()
     comandos = {c for grupo in app.handlers.values() for m in grupo for c in getattr(m, "commands", [])}
-    assert {"start", "hoy", "pendientes", "revisar_dia", "semestre", "reentrenar"} <= comandos
-    assert {t.name for t in app.job_queue.jobs()} == {"resumen", "revision", "reentreno"}
+    assert {"start", "hoy", "pendientes", "revisar_dia", "semestre", "pausar", "reanudar", "estado",
+            "ajustes", "calendario", "mis_datos", "olvidarme", "conectar_moodle", "admin"} <= comandos
+    assert {t.name for t in app.job_queue.jobs()} == {"rutinas", "reentreno", "moodle"}
 
 
 def test_trozos_respeta_el_limite_de_telegram():
     assert [len(t) for t in _trozos("x" * 9000)] == [4000, 4000, 1000]
 
 
-def test_revision_del_dia_pregunta_marca_y_reorganiza(bot, ctx):
+def test_revision_del_dia_pregunta_marca_y_reorganiza(bot, sesion):
+    ctx = sesion.ctx
     _, plan = _con_entrega(ctx)
     primero = plan["bloques"][0]
     ctx.reloj.actual = fecha(primero["fin"]).replace(hour=22, minute=0)
 
-    asyncio.run(bot.revision_del_dia())
-    con_botones = [texto for texto, botones in bot.enviados if botones]
+    asyncio.run(bot.revision_del_dia(42))
+    con_botones = [texto for _, texto, botones in bot.enviados if botones]
     assert len(con_botones) >= 2                      # un mensaje por bloque y el de reorganizar
-    assert bot.enviados[-1][1][0][0].callback_data == "rev"
+    assert bot.enviados[-1][2][0][0].callback_data == "rev"
+    assert {destino for destino, _, _ in bot.enviados} == {42}
 
     # El estudiante marca el primer bloque como no hecho y pide reorganizar.
     consulta = ConsultaFalsa()
-    asyncio.run(bot._boton_bloque(consulta, f"{primero['bloque_id']}:perdido"))
+    asyncio.run(bot._boton_bloque(42, consulta, f"{primero['bloque_id']}:perdido"))
     assert "no hecho" in consulta.textos[0]
     bot.enviados.clear()
-    asyncio.run(bot.reorganizar())
-    assert bot.enviados and "Bloques agendados" in bot.enviados[-1][0]   # aviso de respaldo, sin LLM
+    asyncio.run(bot.reorganizar(42))
+    assert bot.enviados and "Bloques agendados" in bot.enviados[-1][1]   # aviso de respaldo, sin LLM
 
 
-def test_bloque_hecho_pregunta_si_la_subtarea_termino_y_aprende(bot, ctx):
+def test_bloque_hecho_pregunta_si_la_subtarea_termino_y_aprende(bot, sesion):
+    ctx = sesion.ctx
     entrega, plan = _con_entrega(ctx)
     subtarea = ctx.repo.subtareas_de_entrega(entrega["entrega_id"])[0]
     for bloque in ctx.repo.bloques_de_subtarea(subtarea["id"]):
-        asyncio.run(bot._boton_bloque(ConsultaFalsa(), f"{bloque['id']}:hecho"))
-    texto, botones = bot.enviados[-1]
+        asyncio.run(bot._boton_bloque(42, ConsultaFalsa(), f"{bloque['id']}:hecho"))
+    _, texto, botones = bot.enviados[-1]
     assert "¿La terminaste?" in texto and botones[0][0].callback_data == f"t:{subtarea['id']}:0"
 
     consulta = ConsultaFalsa()
-    asyncio.run(bot._boton_subtarea(consulta, f"{subtarea['id']}:0"))
+    asyncio.run(bot._boton_subtarea(42, consulta, f"{subtarea['id']}:0"))
     assert "terminada" in consulta.textos[0]
     assert len(ctx.repo.historial(fuente="uso")) == 1
 
 
-def test_archivo_dudoso_pregunta_y_el_usuario_confirma(bot, ctx):
-    ruta = ctx.ajustes.carpeta_vigilada / "recibo.txt"
+def test_archivo_dudoso_pregunta_y_el_usuario_confirma(bot, sesion, tmp_path):
+    ruta = tmp_path / "recibo.txt"
     ruta.write_text(TEXTO_AJENO, encoding="utf-8")
-    asyncio.run(bot.procesar_archivo(ruta))
-    texto, botones = bot.enviados[-1]
+    asyncio.run(bot.procesar_archivo(42, ruta))
+    _, texto, botones = bot.enviados[-1]
     assert "recibo.txt" in texto and botones[-1][0].callback_data.endswith(":x")
 
+    # Otro estudiante no puede responder por él.
+    ajena = ConsultaFalsa()
+    asyncio.run(bot._boton_archivo(7, ajena, botones[0][0].callback_data.split(":", 1)[1]))
+    assert ajena.textos == ["Ese archivo ya fue atendido."] and ruta.exists()
+
     consulta = ConsultaFalsa()
-    asyncio.run(bot._boton_archivo(consulta, botones[0][0].callback_data.split(":", 1)[1]))
+    asyncio.run(bot._boton_archivo(42, consulta, botones[0][0].callback_data.split(":", 1)[1]))
     assert consulta.textos[0].startswith("Moví recibo.txt")
     assert not ruta.exists()
+    movidos = list(sesion.ctx.ajustes.carpeta_destino.rglob("recibo.txt"))
+    assert len(movidos) == 1
 
 
-def test_archivo_claro_se_mueve_y_avisa(bot, ctx):
-    ruta = ctx.ajustes.carpeta_vigilada / "guia.txt"
+def test_archivo_claro_se_mueve_a_la_carpeta_del_estudiante(bot, sesion, tmp_path):
+    ruta = tmp_path / "guia.txt"
     ruta.write_text(TEXTO_SO, encoding="utf-8")
-    asyncio.run(bot.procesar_archivo(ruta))
-    assert bot.enviados[-1] == ("Moví guia.txt a Sistemas Operativos.", None)
+    asyncio.run(bot.procesar_archivo(42, ruta))
+    assert bot.enviados[-1] == (42, "Moví guia.txt a Sistemas Operativos.", None)
+    assert (sesion.ctx.ajustes.carpeta_destino / "Sistemas Operativos" / "guia.txt").exists()
 
 
 def test_el_vigilante_detecta_un_archivo_nuevo(tmp_path):

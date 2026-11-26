@@ -78,7 +78,10 @@ class MoodleFalso:
 
         funcion = datos["wsfunction"]
         self.llamadas.append((funcion, datos))
-        assert datos["wstoken"] == "tok123"
+        if datos["wstoken"] != "tok123":
+            return httpx.Response(200, json={
+                "exception": "moodle_exception", "errorcode": "invalidtoken", "message": "Token no válido",
+            })
         if funcion == "core_course_get_enrolled_courses_by_timeline_classification":
             return httpx.Response(200, json={"courses": CURSOS})
         if funcion == "core_calendar_get_calendar_events":

@@ -49,4 +49,12 @@ moodle:
   dias_adelante: 60         # hasta dónde mira el calendario
   avisar_contenido_nuevo: true  # diapositivas, lecturas, etc. que el profesor notifique
 
+# Base de datos del modo consola (un solo usuario).
 base_de_datos: data/edith.db
+
+# Bot de Telegram con varios estudiantes. Cada uno tiene su propia base de datos
+# y sus archivos en <carpeta_datos>/usuarios/<id de Telegram>/. La variable de
+# entorno EDITH_DATOS reemplaza a carpeta_datos (útil con Docker).
+bot:
+  carpeta_datos: data
+  limite_mensajes_dia: 80   # mensajes al LLM por estudiante y por día (los comandos no cuentan)

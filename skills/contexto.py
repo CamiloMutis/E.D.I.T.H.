@@ -31,6 +31,9 @@ class Contexto:
     clasificador: ClasificadorMaterias
     reloj: Callable[[], datetime] | None = None
     moodle: Any = None  # ClienteMoodle; se crea al primer uso en skills.consultar_moodle
+    # Crea el cliente de Moodle del estudiante (con su token). Sin ella se usan
+    # las credenciales de .env, como en el modo consola.
+    fabrica_moodle: Callable[[], Any] | None = None
 
     def ahora(self) -> datetime:
         return self.reloj() if self.reloj else datetime.now(self.ajustes.zona)

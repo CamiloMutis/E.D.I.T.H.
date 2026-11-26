@@ -6,17 +6,16 @@ import asyncio
 import sqlite3
 from datetime import time
 
+import httpx
 import pytest
 
-from agente.orquestador import Agente
 from ajustes import cargar_ajustes
 from db.repositorio import Repositorio
-from integraciones.moodle import ErrorMoodle
-from integraciones.telegram_bot import BotEdith
+from integraciones.moodle import ClienteMoodle, ErrorMoodle
 from skills.agenda import ErrorSkill
 from skills.vigilar_moodle import dentro_del_horario, redactar_aviso_moodle, revisar_moodle
-from tests.conftest import momento
-from tests.test_integraciones import SinLLM
+from tests.conftest import momento, registrar
+from tests.test_integraciones import bot_de_prueba
 from tests.test_moodle import EVENTOS, URL, MoodleFalso, _evento, cliente, notificacion
 
 # AHORA (conftest) es lunes 16 nov, 8:00. Eventos de EVENTOS (instancia = id + 1000):
@@ -185,53 +184,85 @@ def test_configuracion_de_vigilancia_invalida(tmp_path, contenido):
 
 
 @pytest.fixture
-def bot(ctx, moodle, monkeypatch):
-    monkeypatch.delenv("TELEGRAM_CHAT_ID", raising=False)
-    ctx.repo.fijar_preferencia("chat_id", "42")
-    bot = BotEdith(ctx, Agente(ctx, SinLLM()), "123456:token-de-prueba")
-    bot.enviados = []
-
-    async def enviar(texto, botones=None):
-        bot.enviados.append(texto)
-
-    bot.enviar = enviar
-    return bot
+def sesion_moodle(gestor):
+    """Estudiante 42 con Moodle conectado contra un servidor falso."""
+    sesion = registrar(gestor, 42)
+    gestor.cuentas.guardar_token_moodle(42, "usuario", "tok123")
+    servidor = MoodleFalso(eventos=list(EVENTOS))
+    sesion.ctx.moodle = cliente(servidor)
+    sesion.servidor = servidor
+    return sesion
 
 
-def test_el_bot_programa_la_vigilancia_si_moodle_esta_configurado(bot, monkeypatch):
-    monkeypatch.setenv("MOODLE_URL", "https://moodle.prueba")
-    trabajos = {t.name: t for t in bot.construir().job_queue.jobs()}
+@pytest.fixture
+def bot(gestor, sesion_moodle):
+    return bot_de_prueba(gestor)
+
+
+def _textos(bot, telegram_id=42):
+    return [texto for destino, texto, _ in bot.enviados if destino == telegram_id]
+
+
+def test_el_bot_programa_la_vigilancia_si_moodle_esta_configurado(bot):
+    trabajos = {t.name for t in bot.construir().job_queue.jobs()}
     assert "moodle" in trabajos
 
 
-def test_el_bot_no_revisa_fuera_del_horario(bot, ctx, moodle):
-    ctx.reloj.actual = momento(20, 23)
-    assert asyncio.run(bot.vigilar_moodle()) is False
-    assert moodle.llamadas == [("login", moodle.llamadas[0][1])]   # solo el inicio de sesión del fixture
+def test_sin_moodle_url_no_se_programa_la_vigilancia(bot, gestor):
+    gestor.moodle_url = ""
+    assert "moodle" not in {t.name for t in bot.construir().job_queue.jobs()}
 
 
-def test_el_bot_avisa_dentro_del_horario(bot, ctx, moodle):
-    asyncio.run(bot.vigilar_moodle())
-    assert "Empecé a vigilar Moodle" in bot.enviados[-1]
-    moodle.eventos.append(_evento(4, "Vencimiento de Manual de Usuario", 10, momento(27, 23, 59)))
-    asyncio.run(bot.vigilar_moodle())
-    assert "Manual de Usuario" in bot.enviados[-1]
+def test_el_bot_no_revisa_fuera_del_horario(bot, sesion_moodle):
+    sesion_moodle.ctx.reloj.actual = momento(20, 23)
+    asyncio.run(bot.vigilar_moodle_todos())
+    assert [n for n, _ in sesion_moodle.servidor.llamadas] == ["login"]   # solo el inicio de sesión del fixture
 
 
-def test_el_comando_manual_ignora_el_horario(bot, ctx):
-    ctx.reloj.actual = momento(20, 23)
-    assert asyncio.run(bot.vigilar_moodle(forzar=True)) is True
-    assert "Empecé a vigilar Moodle" in bot.enviados[-1]
+def test_el_bot_avisa_dentro_del_horario(bot, sesion_moodle):
+    asyncio.run(bot.vigilar_moodle_todos())
+    assert "Empecé a vigilar Moodle" in _textos(bot)[-1]
+    sesion_moodle.servidor.eventos.append(_evento(4, "Vencimiento de Manual de Usuario", 10, momento(27, 23, 59)))
+    asyncio.run(bot.vigilar_moodle_todos())
+    assert "Manual de Usuario" in _textos(bot)[-1]
 
 
-def test_sin_dueno_no_consume_los_avisos(bot, ctx, moodle):
-    ctx.repo.fijar_preferencia("chat_id", "")
-    assert asyncio.run(bot.vigilar_moodle(forzar=True)) is False
-    assert ctx.repo.preferencia("moodle_sembrado") is None
+def test_el_comando_manual_ignora_el_horario(bot, sesion_moodle):
+    sesion_moodle.ctx.reloj.actual = momento(20, 23)
+    assert asyncio.run(bot.vigilar_moodle(42, forzar=True)) is True
+    assert "Empecé a vigilar Moodle" in _textos(bot)[-1]
 
 
-# --- Entregas --------------------------------------------------------------------
+def test_en_pausa_no_se_vigila_moodle(bot, gestor, sesion_moodle):
+    gestor.cuentas.actualizar(42, pausado_hasta="indefinido")
+    asyncio.run(bot.vigilar_moodle_todos())
+    assert bot.enviados == []
 
+
+def test_token_vencido_pide_reconectar_una_sola_vez(bot, gestor, sesion_moodle):
+    sesion_moodle.ctx.moodle = ClienteMoodle.con_token(
+        URL, "vencido", sesion_moodle.ctx.ajustes.zona, httpx.MockTransport(sesion_moodle.servidor)
+    )
+    asyncio.run(bot.vigilar_moodle_todos())
+    assert "/conectar_moodle" in _textos(bot)[-1]
+    assert gestor.cuentas.obtener(42)["moodle_estado"] == "invalido"
+    assert gestor.cuentas.token_moodle(42) is None
+
+    bot.enviados.clear()
+    asyncio.run(bot.vigilar_moodle_todos())   # ya no se intenta hasta que reconecte
+    assert bot.enviados == []
+
+
+def test_cada_estudiante_ve_solo_su_moodle(bot, gestor, sesion_moodle):
+    otra = registrar(gestor, 77)
+    gestor.cuentas.guardar_token_moodle(77, "otro", "tok123")
+    servidor_otra = MoodleFalso(eventos=[_evento(9, "Vencimiento de Ensayo", 10, momento(27, 23, 59))])
+    otra.ctx.moodle = cliente(servidor_otra)
+    asyncio.run(bot.vigilar_moodle_todos())
+    assert "3 entregas" in _textos(bot, 42)[-1]
+    assert "1 entregas" in _textos(bot, 77)[-1]
+    assert set(sesion_moodle.ctx.repo.moodle_eventos()) == {1, 2, 3}
+    assert set(otra.ctx.repo.moodle_eventos()) == {9}
 
 def test_lo_entregado_no_se_recuerda(ctx, moodle):
     moodle.estados_tarea[1001] = "submitted"

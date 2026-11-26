@@ -166,7 +166,8 @@ def test_traduccion_al_formato_de_claude():
 
 
 def test_seleccion_de_proveedor(monkeypatch):
-    for variable in ("LLM_PROVIDER", "GROQ_API_KEY", "ANTHROPIC_API_KEY", "OPENAI_API_KEY", "OPENAI_MODEL", "GROQ_MODEL"):
+    for variable in ("LLM_PROVIDER", "GROQ_API_KEY", "ANTHROPIC_API_KEY", "OPENAI_API_KEY", "OPENAI_MODEL", "GROQ_MODEL",
+                     "GEMINI_API_KEY", "GEMINI_MODEL"):
         monkeypatch.delenv(variable, raising=False)
     with pytest.raises(ErrorLLM):
         crear_cliente()

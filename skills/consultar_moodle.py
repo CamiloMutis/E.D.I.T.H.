@@ -18,7 +18,10 @@ DIAS_MAX = 90
 def obtener_cliente(ctx: Contexto) -> ClienteMoodle:
     if ctx.moodle is None:
         try:
-            ctx.moodle = ClienteMoodle.desde_entorno(ctx.ajustes.zona)
+            if ctx.fabrica_moodle:
+                ctx.moodle = ctx.fabrica_moodle()
+            else:
+                ctx.moodle = ClienteMoodle.desde_entorno(ctx.ajustes.zona)
         except ErrorMoodle as error:
             raise ErrorSkill(f"No pude entrar a Moodle: {error}") from error
     return ctx.moodle

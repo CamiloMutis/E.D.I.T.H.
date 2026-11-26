@@ -1,13 +1,21 @@
 """Punto de entrada de E.D.I.T.H.
 
 Uso:
-    python main.py              # arranca el bot de Telegram y las rutinas programadas
-    python main.py --consola    # conversa con el agente en la terminal, sin Telegram
+    python main.py              # bot de Telegram para varios estudiantes, con sus rutinas
+    python main.py --consola    # conversa con el agente en la terminal, sin Telegram (un usuario)
+
+El bot consulta Telegram por su cuenta (polling). Si se define EDITH_WEBHOOK_URL
+(la dirección pública https del servidor), en cambio escucha en el puerto PORT
+(8080 por defecto): Telegram envía los mensajes a /telegram y /salud responde
+"ok" para los chequeos de salud y los servicios que lo mantienen despierto.
 """
 
 from __future__ import annotations
 
 import argparse
+import asyncio
+import hashlib
+import json
 import logging
 import os
 import sys
@@ -65,34 +73,60 @@ def modo_consola(ctx, agente) -> None:
             print(f"[error] {error}")
 
 
-def main() -> int:
-    analizador = argparse.ArgumentParser(description="E.D.I.T.H., agente que dirige tu semestre")
-    analizador.add_argument("--consola", action="store_true", help="conversar en la terminal, sin Telegram")
-    argumentos = analizador.parse_args()
+async def correr_webhook(app, url_publica: str, puerto: int) -> None:
+    """Sirve el webhook de Telegram y /salud con tornado (viene con python-telegram-bot[webhooks])."""
+    import signal
 
-    configurar_registro()
+    import tornado.web
+    from telegram import Update
+
+    secreto = os.getenv("EDITH_WEBHOOK_SECRETO") or hashlib.sha256(app.bot.token.encode()).hexdigest()[:32]
+
+    class Webhook(tornado.web.RequestHandler):
+        async def post(self):
+            if self.request.headers.get("X-Telegram-Bot-Api-Secret-Token") != secreto:
+                self.set_status(403)
+                return
+            await app.update_queue.put(Update.de_json(json.loads(self.request.body), app.bot))
+
+    class Salud(tornado.web.RequestHandler):
+        def get(self):
+            self.write("ok")
+
+        def head(self):
+            self.set_status(200)
+
+    parar = asyncio.Event()
+    bucle = asyncio.get_running_loop()
+    for senal in (signal.SIGINT, signal.SIGTERM):
+        try:
+            bucle.add_signal_handler(senal, parar.set)
+        except (NotImplementedError, RuntimeError):
+            pass  # Windows
+
+    async with app:
+        await app.bot.set_webhook(
+            f"{url_publica.rstrip('/')}/telegram", secret_token=secreto, allowed_updates=Update.ALL_TYPES
+        )
+        if app.post_init:
+            await app.post_init(app)
+        await app.start()
+        servidor = tornado.web.Application(
+            [(r"/telegram", Webhook), (r"/salud", Salud), (r"/", Salud)]
+        ).listen(puerto, "0.0.0.0")
+        logging.getLogger("edith").info("Webhook en %s/telegram, escuchando en el puerto %s", url_publica, puerto)
+        try:
+            await parar.wait()
+        finally:
+            servidor.stop()
+            await app.stop()
+
+
+def modo_bot(ajustes, llm) -> int:
+    from integraciones.telegram_bot import BotEdith, admin_desde_entorno
+    from usuarios import GestorUsuarios, abrir_cuentas, migrar_instalacion_anterior, preparar_modelos
+
     registro = logging.getLogger("edith")
-    ajustes = cargar_ajustes()
-    ctx = construir_contexto(ajustes)
-
-    from agente.llm import ErrorLLM, crear_cliente
-    from agente.orquestador import Agente
-
-    try:
-        llm = crear_cliente()
-        agente = Agente(ctx, llm)
-        registro.info("LLM en uso: %s (%s)", llm.nombre, llm.modelo)
-    except ErrorLLM as error:
-        if not argumentos.consola:
-            print(f"Error: {error}", file=sys.stderr)
-            return 1
-        registro.warning("%s", error)
-        agente = None
-
-    if argumentos.consola:
-        modo_consola(ctx, agente)
-        return 0
-
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     if not token:
         print(
@@ -102,19 +136,59 @@ def main() -> int:
         )
         return 1
 
-    from integraciones.telegram_bot import BotEdith
-    from integraciones.vigilante_archivos import VigilanteArchivos
+    predictor, clasificador = preparar_modelos(ajustes)
+    gestor = GestorUsuarios(ajustes, abrir_cuentas(ajustes), predictor, clasificador, llm)
+    admin = admin_desde_entorno()
+    if migrar_instalacion_anterior(gestor, admin):
+        registro.info("Tus datos de la versión de un solo usuario pasaron a tu cuenta.")
+    registro.info("Datos en %s · %s usuarios activos", ajustes.carpeta_estado, len(gestor.cuentas.activos()))
+    if not gestor.moodle_url:
+        registro.warning("Sin MOODLE_URL: los estudiantes no podrán conectar Moodle")
 
-    bot = BotEdith(ctx, agente, token)
-    app = bot.construir()
-    vigilante = VigilanteArchivos(ajustes.carpeta_vigilada, bot.programar_archivo)
-    vigilante.iniciar()
-    registro.info("E.D.I.T.H. en línea. Escríbele /start a tu bot en Telegram. Ctrl+C para detener.")
+    bot = BotEdith(gestor, token, admin, os.getenv("EDITH_CODIGO_INVITACION"))
+    url_webhook = os.getenv("EDITH_WEBHOOK_URL")
     try:
-        app.run_polling()
+        if url_webhook:
+            app = bot.construir(con_updater=False)
+            asyncio.run(correr_webhook(app, url_webhook, int(os.getenv("PORT") or 8080)))
+        else:
+            app = bot.construir()
+            registro.info("E.D.I.T.H. en línea. Escríbele /start a tu bot en Telegram. Ctrl+C para detener.")
+            app.run_polling(drop_pending_updates=False)
     finally:
-        vigilante.detener()
-        ctx.repo.cerrar()
+        gestor.cerrar_todo()
+    return 0
+
+
+def main() -> int:
+    analizador = argparse.ArgumentParser(description="E.D.I.T.H., agente que dirige tu semestre")
+    analizador.add_argument("--consola", action="store_true", help="conversar en la terminal, sin Telegram")
+    argumentos = analizador.parse_args()
+
+    configurar_registro()
+    registro = logging.getLogger("edith")
+    ajustes = cargar_ajustes()
+
+    from agente.llm import ErrorLLM, crear_cliente
+
+    try:
+        llm = crear_cliente()
+        registro.info("LLM en uso: %s (%s)", llm.nombre, llm.modelo)
+    except ErrorLLM as error:
+        if not argumentos.consola:
+            print(f"Error: {error}", file=sys.stderr)
+            return 1
+        registro.warning("%s", error)
+        llm = None
+
+    if not argumentos.consola:
+        return modo_bot(ajustes, llm)
+
+    from agente.orquestador import Agente
+
+    ctx = construir_contexto(ajustes)
+    modo_consola(ctx, Agente(ctx, llm) if llm else None)
+    ctx.repo.cerrar()
     return 0
 
 

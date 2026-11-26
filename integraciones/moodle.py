@@ -35,6 +35,14 @@ class ErrorMoodle(Exception):
     """Moodle rechazó el acceso o la consulta."""
 
 
+class ErrorSesionMoodle(ErrorMoodle):
+    """El token ya no sirve (cambio de clave, token revocado o vencido): hay que volver a conectar."""
+
+
+# Códigos con los que Moodle indica que el token no es válido.
+CODIGOS_SESION = {"invalidtoken"}
+
+
 @dataclass(frozen=True)
 class EventoMoodle:
     id: int
@@ -88,8 +96,12 @@ class ClienteMoodle:
         clave: str,
         zona: ZoneInfo | None = None,
         transporte: httpx.BaseTransport | None = None,
+        token: str | None = None,
     ):
-        """``transporte`` permite a las pruebas responder sin red (``httpx.MockTransport``)."""
+        """Inicia sesión con usuario y clave, o reutiliza ``token`` si se entrega (entonces la clave no se usa).
+
+        ``transporte`` permite a las pruebas responder sin red (``httpx.MockTransport``).
+        """
         self.url = url.rstrip("/")
         self.zona = zona or ZoneInfo("America/Bogota")
         self._http = httpx.Client(timeout=30, follow_redirects=True, transport=transporte)
@@ -99,7 +111,18 @@ class ClienteMoodle:
         # recordarlo ahorra una consulta por tarea en cada revisión.
         self._entregados: set[tuple[str, int]] = set()
         self._id_usuario: int | None = None
-        self._token = self._pedir_token(usuario, clave)
+        self._token = token or self._pedir_token(usuario, clave)
+
+    @classmethod
+    def con_token(
+        cls, url: str, token: str, zona: ZoneInfo | None = None, transporte: httpx.BaseTransport | None = None
+    ) -> "ClienteMoodle":
+        """Cliente a partir de un token ya obtenido; es lo que usa el bot con cada estudiante."""
+        return cls(url, "", "", zona, transporte, token=token)
+
+    @property
+    def token(self) -> str:
+        return self._token
 
     @classmethod
     def desde_entorno(cls, zona: ZoneInfo | None = None) -> "ClienteMoodle":
@@ -128,6 +151,8 @@ class ClienteMoodle:
         except (httpx.HTTPError, ValueError) as error:
             raise ErrorMoodle(f"Falló {funcion}: {error}") from error
         if isinstance(respuesta, dict) and "exception" in respuesta:
+            if respuesta.get("errorcode") in CODIGOS_SESION:
+                raise ErrorSesionMoodle(f"{funcion}: {respuesta.get('message')}")
             raise ErrorMoodle(f"{funcion}: {respuesta.get('message')}")
         return respuesta
 
