@@ -39,6 +39,8 @@ class ConsultaFalsa:
 @pytest.fixture
 def bot(ctx, monkeypatch):
     monkeypatch.delenv("TELEGRAM_CHAT_ID", raising=False)
+    # Otras pruebas cargan .env; sin esto la rutina de Moodle aparecería según el orden.
+    monkeypatch.delenv("MOODLE_URL", raising=False)
     ctx.repo.fijar_preferencia("chat_id", "42")
     bot = BotEdith(ctx, Agente(ctx, SinLLM()), "123456:token-de-prueba")
     bot.enviados = []

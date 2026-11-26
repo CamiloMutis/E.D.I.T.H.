@@ -15,7 +15,7 @@ from skills.contexto import Contexto, formato_fecha, formato_hora
 DIAS_MAX = 90
 
 
-def _cliente(ctx: Contexto) -> ClienteMoodle:
+def obtener_cliente(ctx: Contexto) -> ClienteMoodle:
     if ctx.moodle is None:
         try:
             ctx.moodle = ClienteMoodle.desde_entorno(ctx.ajustes.zona)
@@ -41,7 +41,7 @@ def consultar_moodle(ctx: Contexto, dias: int = 14, curso: str | None = None) ->
     # calcula "dias" como diferencia de fechas, no de horas.
     hasta = datetime.combine((ahora + timedelta(days=dias)).date(), time(23, 59, 59), ahora.tzinfo)
     try:
-        eventos = _cliente(ctx).proximos_eventos(desde=ahora, hasta=hasta)
+        eventos = obtener_cliente(ctx).proximos_eventos(desde=ahora, hasta=hasta)
     except ErrorMoodle as error:
         ctx.moodle = None  # la próxima vez se vuelve a iniciar sesión
         raise ErrorSkill(f"Moodle no respondió: {error}") from error
@@ -58,6 +58,7 @@ def consultar_moodle(ctx: Contexto, dias: int = 14, curso: str | None = None) ->
     return {
         "dias_consultados": dias,
         "total": len(eventos),
+        "pendientes_por_entregar": sum(1 for e in eventos if _estado(e) in ("pendiente", "borrador sin enviar")),
         "cantidad_por_dia": por_dia,
         "eventos": [
             {
@@ -66,9 +67,25 @@ def consultar_moodle(ctx: Contexto, dias: int = 14, curso: str | None = None) ->
                 "cuando": f"{formato_fecha(e.inicio)}, {formato_hora(e.inicio)}",
                 "fecha": e.inicio.isoformat(),
                 "tipo": e.modulo or e.tipo,
+                "estado": _estado(e),
+                "abre": (
+                    f"{formato_fecha(e.apertura)}, {formato_hora(e.apertura)}"
+                    if e.apertura and e.apertura > ahora else None
+                ),
                 "enlace": e.url,
                 "descripcion": e.descripcion[:300],
             }
             for e in eventos
         ],
     }
+
+
+def _estado(e) -> str | None:
+    """Estado de entrega en palabras; ``None`` si el evento no es algo que se entregue."""
+    if e.modulo not in ("assign", "quiz") or e.tipo not in ("due", "close"):
+        return None
+    if e.entregado:
+        return "entregado"
+    if e.estado_entrega == "draft":
+        return "borrador sin enviar"
+    return "pendiente" if e.estado_entrega else "desconocido"

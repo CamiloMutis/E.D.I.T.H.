@@ -150,9 +150,38 @@ Escríbele `/start` a tu bot. Desde ahí se le habla en lenguaje natural o con c
 | `/revisar_dia` | Pregunta cómo te fue con los bloques de hoy y reorganiza la semana |
 | `/semestre N` | Cambia el semestre y, con él, las materias activas |
 | `/materias` | Materias activas |
+| `/moodle` | Revisa Moodle ahora: tareas nuevas, fechas cambiadas y lo que está por vencer |
 | `/reentrenar` | Reentrena los modelos con tus datos |
 
 Sin que se lo pidas, E.D.I.T.H. envía un resumen a las 7:00 a. m., hace la revisión a las 10:00 p. m. y reentrena el modelo de tiempos los domingos. También organiza cualquier PDF, Word o PowerPoint que aparezca en la carpeta de descargas o que le envíes por el chat.
+
+### Vigilancia de Moodle
+
+Si `MOODLE_URL`, `MOODLE_USUARIO` y `MOODLE_CLAVE` están en `.env`, E.D.I.T.H. revisa el calendario de Moodle cada 15 minutos entre las 6:00 a. m. y las 10:00 p. m. y avisa por Telegram cuando:
+
+- un profesor publica una tarea nueva (y si aún no abre, desde cuándo se puede entregar),
+- se abre una tarea o un quiz que estaba cerrado,
+- cambia la fecha de una entrega,
+- una entrega está a 72, 24 o 3 horas de vencer (cada aviso se envía una sola vez),
+- el profesor sube contenido nuevo al curso (diapositivas, lecturas…) con la opción "notificar cambio de contenido".
+
+Consulta el estado de cada entrega: **lo que ya entregaste no se recuerda** (en quices, cuenta un intento terminado), avisa si dejaste un borrador sin enviar y confirma una vez cuando detecta que entregaste.
+
+Moodle no ofrece webhooks para estudiantes, por eso la detección es por consulta periódica. La primera revisión solo registra lo existente, sin anunciarlo como nuevo. El intervalo, el horario, los umbrales y el aviso de contenido nuevo se cambian en la sección `moodle` de `config.yaml`. La consulta en lenguaje natural ("¿qué tengo en Moodle esta semana?", "¿ya entregué el plan de pruebas?") también funciona desde el chat.
+
+### Dejarlo corriendo (Linux)
+
+Los avisos solo llegan mientras el bot está en marcha. Para no depender de una terminal abierta, instálalo como servicio de usuario de systemd (no necesita sudo):
+
+```bash
+scripts/servicio.sh instalar             # arranca ya y cada vez que inicias sesión
+scripts/servicio.sh instalar --siempre   # además corre aunque no hayas iniciado sesión
+scripts/servicio.sh estado               # ¿está corriendo?
+scripts/servicio.sh logs                 # ver lo que está haciendo
+scripts/servicio.sh desinstalar
+```
+
+Si se cae (sin internet, Moodle no responde), systemd lo reinicia a los 30 segundos. Si el equipo estuvo suspendido, al volver avisa lo que se haya perdido: aperturas y recordatorios no se saltan. Mientras el servicio corre, no ejecutes también `python main.py`: Telegram no permite dos instancias del mismo bot a la vez. Para que funcione con el equipo apagado hay que instalarlo en un servidor (un VPS o una Raspberry Pi) con los mismos pasos.
 
 ### Sin Telegram
 
@@ -206,6 +235,7 @@ python -m ml.entrenar --regenerar
 ├── data/                     pénsum y datasets de arranque
 ├── docs/encuesta.md          formulario para recolectar datos reales
 ├── scripts/preparar_demo.py  escenario de demostración
+├── scripts/servicio.sh       deja el bot corriendo como servicio de systemd
 └── tests/                    pruebas con pytest
 ```
 

@@ -49,6 +49,14 @@ class Ajustes:
     carpeta_vigilada: Path = field(default_factory=lambda: Path.home() / "Downloads")
     carpeta_destino: Path = field(default_factory=lambda: Path.home() / "Universidad")
     calendario_backend: str = "auto"
+    # Vigilancia de Moodle: tareas nuevas y recordatorios de vencimiento.
+    moodle_vigilancia: bool = True
+    moodle_intervalo_minutos: int = 15
+    moodle_horario_inicio: time = time(6, 0)
+    moodle_horario_fin: time = time(22, 0)
+    moodle_avisos_horas: tuple[int, ...] = (72, 24, 3)
+    moodle_dias_adelante: int = 60
+    moodle_contenido_nuevo: bool = True
     ruta_db: Path = field(default_factory=lambda: RAIZ / "data" / "edith.db")
     carpeta_modelos: Path = field(default_factory=lambda: RAIZ / "ml" / "modelos")
     carpeta_datos: Path = field(default_factory=lambda: RAIZ / "data")
@@ -99,6 +107,18 @@ def cargar_ajustes(ruta_config: Path | None = None) -> Ajustes:
     if dia_reentreno not in DIAS_SEMANA:
         raise ValueError(f"config.yaml: reentreno_dia desconocido: {dia_reentreno}")
 
+    moodle = datos.get("moodle", {}) or {}
+    horario_inicio = _hora(moodle.get("horario_inicio", "06:00"))
+    horario_fin = _hora(moodle.get("horario_fin", "22:00"))
+    if horario_inicio >= horario_fin:
+        raise ValueError("config.yaml: moodle.horario_inicio debe ser anterior a moodle.horario_fin")
+    avisos_horas = tuple(sorted({int(h) for h in moodle.get("avisos_horas", base.moodle_avisos_horas)}, reverse=True))
+    if not avisos_horas or min(avisos_horas) <= 0:
+        raise ValueError("config.yaml: moodle.avisos_horas debe tener horas positivas")
+    intervalo = int(moodle.get("intervalo_minutos", base.moodle_intervalo_minutos))
+    if intervalo < 5:
+        raise ValueError("config.yaml: moodle.intervalo_minutos debe ser de al menos 5")
+
     return Ajustes(
         zona=ZoneInfo(datos.get("zona_horaria", "America/Bogota")),
         semestre_actual=int(datos.get("semestre_actual", base.semestre_actual)),
@@ -116,4 +136,11 @@ def cargar_ajustes(ruta_config: Path | None = None) -> Ajustes:
         carpeta_destino=_ruta(carpetas.get("destino", "~/Universidad")),
         calendario_backend=str(datos.get("calendario", {}).get("backend", "auto")).lower(),
         ruta_db=_ruta(datos.get("base_de_datos", "data/edith.db")),
+        moodle_vigilancia=bool(moodle.get("vigilancia", base.moodle_vigilancia)),
+        moodle_intervalo_minutos=intervalo,
+        moodle_horario_inicio=horario_inicio,
+        moodle_horario_fin=horario_fin,
+        moodle_avisos_horas=avisos_horas,
+        moodle_dias_adelante=int(moodle.get("dias_adelante", base.moodle_dias_adelante)),
+        moodle_contenido_nuevo=bool(moodle.get("avisar_contenido_nuevo", base.moodle_contenido_nuevo)),
     )

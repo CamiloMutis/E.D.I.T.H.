@@ -36,4 +36,17 @@ carpetas:
 calendario:
   backend: auto             # auto | google | local
 
+# Vigilancia de Moodle (requiere MOODLE_URL, MOODLE_USUARIO y MOODLE_CLAVE en .env).
+# Avisa por Telegram cuando publican una tarea, cuando abre, cuando cambia su
+# fecha, cuando está por vencer (si aún no la entregaste) y cuando el profesor
+# sube contenido nuevo. Solo revisa dentro del horario.
+moodle:
+  vigilancia: true
+  intervalo_minutos: 15     # cada cuánto se consulta Moodle (mínimo 5)
+  horario_inicio: "06:00"   # fuera de esta franja no consulta ni avisa
+  horario_fin: "22:00"
+  avisos_horas: [72, 24, 3] # recordatorios antes del vencimiento
+  dias_adelante: 60         # hasta dónde mira el calendario
+  avisar_contenido_nuevo: true  # diapositivas, lecturas, etc. que el profesor notifique
+
 base_de_datos: data/edith.db

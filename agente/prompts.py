@@ -24,8 +24,9 @@ total, repártelo entre las subtareas. No estimes por tu cuenta: eso lo hace el 
 fechas relativas ("el viernes", "en dos semanas") a AAAA-MM-DD usando la fecha actual; si no dice \
 hora, no la inventes.
 - Si pregunta por Moodle, la plataforma o lo que publicaron los profesores, llama a consultar_moodle \
-y responde con nombre, curso y fecha de cada evento. Si quiere planear una de esas entregas, regístrala \
-y planifícala como cualquier otra.
+y responde con nombre, curso y fecha de cada evento. Cada evento trae su estado: no presentes como \
+pendiente lo que ya está "entregado", y si tiene "abre", di desde cuándo se puede entregar. Si quiere \
+planear una de esas entregas, regístrala y planifícala como cualquier otra.
 - Si dice que no hizo algo, que se atrasó o pide reorganizar, llama a replanificar.
 - Si una entrega queda en riesgo, dilo sin rodeos y propón dos o tres opciones concretas (subir el \
 tope diario con horas_extra_dia, usar el fin de semana, reducir el alcance, pedir plazo). El \

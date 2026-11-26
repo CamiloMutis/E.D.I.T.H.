@@ -36,6 +36,7 @@ from skills.contexto import Contexto, formato_hora, formato_horas
 from skills.estimar_tiempo import reentrenar_predictor
 from skills.organizar_archivos import clasificar_archivo, confirmar_archivo, reentrenar_clasificador
 from skills.replanificar import replanificar
+from skills.vigilar_moodle import dentro_del_horario, redactar_aviso_moodle, revisar_moodle
 
 registro = logging.getLogger(__name__)
 
@@ -54,6 +55,7 @@ Comandos:
 /revisar_dia — revisar lo de hoy y reorganizar
 /semestre N — cambiar el semestre que cursas
 /materias — materias activas
+/moodle — revisar Moodle ahora (tareas nuevas y por vencer)
 /reentrenar — reentrenar los modelos con tus datos"""
 
 
@@ -170,6 +172,13 @@ class BotEdith:
     async def cmd_revisar_dia(self, update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
         if await self._autorizado(update):
             await self.revision_del_dia()
+
+    async def cmd_moodle(self, update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
+        """Revisión manual: no respeta el horario porque el estudiante la pidió."""
+        if not await self._autorizado(update):
+            return
+        if not await self.vigilar_moodle(forzar=True):
+            await update.message.reply_text("Revisé Moodle: sin novedades.")
 
     async def cmd_reentrenar(self, update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
         if await self._autorizado(update):
@@ -300,6 +309,27 @@ class BotEdith:
             )
         await self.enviar("\n".join(lineas))
 
+    async def vigilar_moodle(self, _: ContextTypes.DEFAULT_TYPE | None = None, forzar: bool = False) -> bool:
+        """Revisa Moodle y avisa lo nuevo o lo que está por vencer. Devuelve si envió algo.
+
+        Fuera del horario configurado no consulta nada. Si aún no hay dueño del
+        chat tampoco: los avisos se marcarían como enviados sin llegar a nadie.
+        """
+        if self.chat_dueno() is None or not (forzar or dentro_del_horario(self.ctx)):
+            return False
+        try:
+            resultado = await self._en_hilo(revisar_moodle, self.ctx)
+        except ErrorSkill as error:
+            registro.warning("Vigilancia de Moodle: %s", error)
+            if forzar:
+                await self.enviar(str(error))
+                return True
+            return False
+        texto = redactar_aviso_moodle(self.ctx, resultado)
+        if texto:
+            await self.enviar(texto)
+        return texto is not None
+
     # ---------------------------------------------------------------- botones
 
     async def al_pulsar_boton(self, update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
@@ -390,7 +420,7 @@ class BotEdith:
             ("start", self.cmd_start), ("ayuda", self.cmd_ayuda), ("help", self.cmd_ayuda),
             ("semestre", self.cmd_semestre), ("materias", self.cmd_materias), ("hoy", self.cmd_hoy),
             ("pendientes", self.cmd_pendientes), ("revisar_dia", self.cmd_revisar_dia),
-            ("reentrenar", self.cmd_reentrenar),
+            ("reentrenar", self.cmd_reentrenar), ("moodle", self.cmd_moodle),
         ]:
             app.add_handler(CommandHandler(nombre, manejador))
         app.add_handler(CallbackQueryHandler(self.al_pulsar_boton))
@@ -407,4 +437,14 @@ class BotEdith:
         # python-telegram-bot numera los días de domingo (0) a sábado (6).
         dia = (DIAS_SEMANA.index(ajustes.dia_reentreno) + 1) % 7
         app.job_queue.run_daily(self.reentreno, _hora(ajustes.hora_reentreno), days=(dia,), name="reentreno")
+        if ajustes.moodle_vigilancia and os.getenv("MOODLE_URL"):
+            app.job_queue.run_repeating(
+                self.vigilar_moodle, interval=ajustes.moodle_intervalo_minutos * 60, first=30, name="moodle"
+            )
+            registro.info(
+                "Vigilancia de Moodle cada %s min, de %s a %s",
+                ajustes.moodle_intervalo_minutos,
+                ajustes.moodle_horario_inicio.strftime("%H:%M"),
+                ajustes.moodle_horario_fin.strftime("%H:%M"),
+            )
         return app
