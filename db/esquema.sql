@@ -20,7 +20,8 @@ CREATE TABLE IF NOT EXISTS entregas (
   peso_nota     REAL,                  -- 0.15 = 15 %
   estado        TEXT DEFAULT 'abierta',   -- abierta | entregada
   riesgo        TEXT,                  -- tranquila | ajustada | en_riesgo
-  holgura       REAL
+  holgura       REAL,
+  moodle_id     TEXT                   -- "assign:123" si vino de Moodle
 );
 
 CREATE TABLE IF NOT EXISTS subtareas (

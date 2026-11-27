@@ -48,6 +48,7 @@ moodle:
   avisos_horas: [72, 24, 3] # recordatorios antes del vencimiento
   dias_adelante: 60         # hasta dónde mira el calendario
   avisar_contenido_nuevo: true  # diapositivas, lecturas, etc. que el profesor notifique
+  planear_entregas: true    # cada tarea o quiz de Moodle se registra y se planea solo
 
 # Base de datos del modo consola (un solo usuario).
 base_de_datos: data/edith.db

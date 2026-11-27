@@ -6,6 +6,10 @@ token.json
 # Datos locales
 data/*.db
 data/*.db-journal
+data/*.db-wal
+data/*.db-shm
+data/usuarios/
+data/clave_maestra
 *.sqlite3
 
 # Python

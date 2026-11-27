@@ -35,6 +35,7 @@ class Repositorio:
     # Columnas agregadas después de crear una tabla. CREATE TABLE IF NOT EXISTS no
     # toca una tabla que ya existe, así que una base creada antes las necesita.
     MIGRACIONES = {
+        "entregas": {"moodle_id": "TEXT"},
         "moodle_eventos": {
             "apertura": "TEXT",
             "apertura_avisada": "INTEGER DEFAULT 0",
@@ -146,6 +147,15 @@ class Repositorio:
                 return min(contenidas, key=lambda m: len(m["nombre"]))
         return None
 
+    def crear_materia(self, nombre: str, semestre: int | None = None) -> dict:
+        """Agrega una materia que no está en el pénsum (por ejemplo, un curso de Moodle) y la deja activa."""
+        self._ejecutar(
+            "INSERT INTO materias (nombre, semestre, activa) VALUES (?, ?, 1) "
+            "ON CONFLICT(nombre) DO UPDATE SET activa = 1",
+            (nombre, semestre),
+        )
+        return self._fila("SELECT * FROM materias WHERE nombre = ?", (nombre,))
+
     def fijar_carpeta_materia(self, materia_id: int, carpeta: str) -> None:
         self._ejecutar("UPDATE materias SET carpeta = ? WHERE id = ?", (carpeta, materia_id))
 
@@ -158,13 +168,27 @@ class Repositorio:
         fecha_limite: datetime,
         peso_nota: float | None = None,
         descripcion: str = "",
+        moodle_id: str | None = None,
     ) -> int:
         cursor = self._ejecutar(
-            "INSERT INTO entregas (materia_id, nombre, descripcion, fecha_limite, peso_nota) "
-            "VALUES (?, ?, ?, ?, ?)",
-            (materia_id, nombre, descripcion, _iso(fecha_limite), peso_nota),
+            "INSERT INTO entregas (materia_id, nombre, descripcion, fecha_limite, peso_nota, moodle_id) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (materia_id, nombre, descripcion, _iso(fecha_limite), peso_nota, moodle_id),
         )
         return cursor.lastrowid
+
+    def entrega_de_moodle(self, moodle_id: str) -> dict | None:
+        """La entrega creada a partir de una actividad de Moodle, abierta o no."""
+        return self._fila(
+            "SELECT e.*, m.nombre AS materia FROM entregas e "
+            "JOIN materias m ON m.id = e.materia_id WHERE e.moodle_id = ? ORDER BY e.id DESC LIMIT 1",
+            (moodle_id,),
+        )
+
+    def actualizar_fecha_entrega(self, entrega_id: int, fecha_limite: datetime) -> None:
+        self._ejecutar(
+            "UPDATE entregas SET fecha_limite = ? WHERE id = ?", (_iso(fecha_limite), entrega_id)
+        )
 
     def obtener_entrega(self, entrega_id: int) -> dict | None:
         return self._fila(

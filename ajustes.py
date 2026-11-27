@@ -57,6 +57,7 @@ class Ajustes:
     moodle_avisos_horas: tuple[int, ...] = (72, 24, 3)
     moodle_dias_adelante: int = 60
     moodle_contenido_nuevo: bool = True
+    moodle_planear_entregas: bool = True  # cada tarea de Moodle queda registrada y planeada sola
     ruta_db: Path = field(default_factory=lambda: RAIZ / "data" / "edith.db")
     carpeta_modelos: Path = field(default_factory=lambda: RAIZ / "ml" / "modelos")
     carpeta_datos: Path = field(default_factory=lambda: RAIZ / "data")
@@ -197,6 +198,7 @@ def cargar_ajustes(ruta_config: Path | None = None) -> Ajustes:
         moodle_avisos_horas=avisos_horas,
         moodle_dias_adelante=int(moodle.get("dias_adelante", base.moodle_dias_adelante)),
         moodle_contenido_nuevo=bool(moodle.get("avisar_contenido_nuevo", base.moodle_contenido_nuevo)),
+        moodle_planear_entregas=bool(moodle.get("planear_entregas", base.moodle_planear_entregas)),
         carpeta_estado=_ruta(carpeta_estado),
         limite_mensajes_dia=int(bot.get("limite_mensajes_dia", base.limite_mensajes_dia)),
     )

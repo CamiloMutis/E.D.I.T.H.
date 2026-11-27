@@ -14,7 +14,8 @@ from datetime import datetime, timedelta
 from integraciones.moodle import ErrorMoodle, EventoMoodle, NotificacionMoodle
 from skills.agenda import ErrorSkill, fecha
 from skills.consultar_moodle import obtener_cliente
-from skills.contexto import Contexto, formato_fecha, formato_hora
+from skills.contexto import Contexto, formato_fecha, formato_hora, formato_vence, lista_por_materia
+from skills.planear_moodle import sincronizar_entregas
 
 # Solo estos eventos son vencimientos. La apertura de un quiz ("open") se toma
 # del propio quiz, y las sesiones de clase no ameritan recordatorio.
@@ -56,6 +57,7 @@ def revisar_moodle(ctx: Contexto) -> dict:
     ultima_revision = fecha(ultima) if ultima else None
     conocidos = repo.moodle_eventos()
     vistos: set[int] = set()
+    actividades: list[tuple[EventoMoodle, bool]] = []
     resultado: dict = {
         "primera_vez": primera_vez,
         "nuevas": [],
@@ -105,6 +107,7 @@ def revisar_moodle(ctx: Contexto) -> dict:
         if alcanzados - avisos:
             avisos = avisos | alcanzados  # entregado o no, ese umbral ya pasó
 
+        actividades.append((e, entregado))
         repo.guardar_evento_moodle(
             e.id, e.nombre, e.curso, e.inicio, e.url, avisos,
             apertura=e.apertura, apertura_avisada=apertura_avisada, entregado=entregado,
@@ -119,6 +122,12 @@ def revisar_moodle(ctx: Contexto) -> dict:
         resultado["contenido"] = [
             n for n in _contenido_nuevo(ctx, cliente) if n.url not in urls_anunciadas
         ]
+
+    # Todo lo de Moodle es una entrega ya definida: queda registrada y planeada.
+    if ctx.ajustes.moodle_planear_entregas:
+        resultado.update(sincronizar_entregas(ctx, actividades, _nombre, _curso_corto))
+    else:
+        resultado.update(planeadas=[], reagendadas=[], cerradas=[])
 
     resultado["conocidas"] = len(vistos)
     resultado["recordatorios"].sort(key=lambda e: e.inicio)
@@ -200,22 +209,29 @@ def redactar_aviso_moodle(ctx: Contexto, resultado: dict) -> str | None:
             "un vencimiento. Lo que ya entregaste no te lo recuerdo."
         )
     seccion("📌 Nuevas tareas en Moodle:", [
-        f"• {_nombre(e)} — {_curso_corto(e.curso)}\n  vence {_cuando(e.inicio)}{_notas(e, ahora)}\n  {e.url}"
+        f"• {_nombre(e)} — {_curso_corto(e.curso)}\n  vence {formato_vence(e.inicio)}{_notas(e, ahora)}\n  {e.url}"
         for e in resultado["nuevas"]
     ])
     seccion("🔓 Ya se puede entregar:", [
-        f"• {_nombre(e)} — {_curso_corto(e.curso)}\n  abrió {_cuando(e.apertura)}, vence {_cuando(e.inicio)}\n  {e.url}"
+        f"• {_nombre(e)} — {_curso_corto(e.curso)}\n  abrió {_cuando(e.apertura)}, vence {formato_vence(e.inicio)}\n  {e.url}"
         for e in resultado["aperturas"]
     ])
     seccion("🔁 Cambió la fecha:", [
-        f"• {_nombre(e)} — {_curso_corto(e.curso)}\n  antes {_cuando(antes)}, ahora {_cuando(e.inicio)}"
+        f"• {_nombre(e)} — {_curso_corto(e.curso)}\n  antes {formato_vence(antes)}, ahora {formato_vence(e.inicio)}"
         for e, antes in resultado["cambiadas"]
     ])
     seccion("⏰ Por vencer:", [
-        f"• {_nombre(e)} — {_curso_corto(e.curso)}\n  vence {_faltan(e.inicio, ahora)} ({_cuando(e.inicio)})"
+        f"• {_nombre(e)} — {_curso_corto(e.curso)}\n  vence {_faltan(e.inicio, ahora)} ({formato_vence(e.inicio)})"
         f"{_notas(e, ahora)}\n  {e.url}"
         for e in resultado["recordatorios"]
     ])
+    planeadas = resultado.get("planeadas", [])
+    if planeadas:
+        secciones.append("🗓️ Agregué a tu plan:\n\n" + lista_por_materia(planeadas, ahora)
+                         + "\n\nTus bloques de estudio están en /hoy.")
+    reagendadas = resultado.get("reagendadas", [])
+    if reagendadas:
+        secciones.append("📆 Reacomodé tu plan por el cambio de fecha:\n\n" + lista_por_materia(reagendadas, ahora))
     seccion("✅ Registré tu entrega:", [
         f"• {_nombre(e)} — {_curso_corto(e.curso)}" for e in resultado["entregadas"]
     ])

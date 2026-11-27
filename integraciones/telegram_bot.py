@@ -595,18 +595,8 @@ class BotEdith:
         sesion = await self._sesion_activa(update)
         if not sesion:
             return
-        entregas = (await self._en_hilo(sesion, soporte.listar_pendientes, sesion.ctx))["entregas"]
-        if not entregas:
-            await update.message.reply_text("No tienes entregas abiertas. Si tienes una, cuéntamela y la planeo.")
-            return
-        lineas = []
-        for e in entregas:
-            riesgo = soporte.ETIQUETAS_RIESGO.get(e["riesgo"], e["riesgo"])
-            lineas.append(f"• {e['nombre']} de {e['materia']} — {e['fecha_limite']} ({riesgo})")
-            for s in e["subtareas"]:
-                if s["estado"] != "hecha":
-                    lineas.append(f"    – {s['nombre']}: faltan {formato_horas(s['horas_restantes'] or 0)}")
-        for parte in _trozos("\n".join(lineas)):
+        texto = await self._en_hilo(sesion, soporte.texto_pendientes, sesion.ctx)
+        for parte in _trozos(texto):
             await update.message.reply_text(parte)
 
     async def cmd_revisar_dia(self, update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:

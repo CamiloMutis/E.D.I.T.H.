@@ -452,3 +452,107 @@ def test_nombre_sin_lo_que_agrega_moodle(original, limpio):
 
     evento = EventoMoodle(1, original, "", momento(20, 8), 0, "due", "assign", "")
     assert _nombre(evento) == limpio
+
+
+# --- Planeación automática de lo que hay en Moodle --------------------------------
+
+
+def _por_nombre(ctx):
+    return {e["nombre"]: e for e in ctx.repo.entregas_abiertas()}
+
+
+def test_todo_lo_de_moodle_queda_planeado_desde_la_primera_revision(ctx, moodle):
+    resultado = revisar_moodle(ctx)
+
+    entregas = _por_nombre(ctx)
+    assert set(entregas) == {"Matriz de Pruebas", "Plan de Pruebas", "Quiz semáforos"}
+    assert entregas["Plan de Pruebas"]["materia"] == "Gestión de Proyectos de TI"
+    assert entregas["Quiz semáforos"]["materia"] == "Sistemas Operativos"
+    for entrega in entregas.values():
+        subtareas = ctx.repo.subtareas_de_entrega(entrega["id"])
+        assert subtareas and entrega["riesgo"]
+    quiz = ctx.repo.subtareas_de_entrega(entregas["Quiz semáforos"]["id"])
+    assert {s["tipo_tarea"] for s in quiz} == {"estudio"}
+    assert ctx.repo.bloques_pendientes_desde(momento(16, 8))
+
+    assert [p["nombre"] for p in resultado["planeadas"]] == ["Matriz de Pruebas", "Quiz semáforos", "Plan de Pruebas"]
+    texto = redactar_aviso_moodle(ctx, resultado)
+    assert "🗓️ Agregué a tu plan:" in texto
+    assert "Gestión de Proyectos de TI:\n• Matriz de Pruebas — dom 22 nov, 11:59 p. m. — faltan 6 días" in texto
+    assert "Sistemas Operativos:\n• Quiz semáforos — mié 25 nov, 10 a. m. — faltan 9 días" in texto
+    assert " h," not in texto  # sin horas de estudio en el aviso
+
+
+def test_no_duplica_entregas_en_revisiones_siguientes(ctx, moodle):
+    revisar_moodle(ctx)
+    bloques = len(ctx.repo.bloques_pendientes_desde(momento(16, 8)))
+
+    resultado = revisar_moodle(ctx)
+    assert resultado["planeadas"] == [] and len(ctx.repo.entregas_abiertas()) == 3
+    assert len(ctx.repo.bloques_pendientes_desde(momento(16, 8))) == bloques
+
+
+def test_una_tarea_nueva_se_planea_al_llegar(ctx, moodle):
+    revisar_moodle(ctx)
+    moodle.eventos.append(_evento(4, "Vencimiento de Manual de Usuario", 10, momento(27, 23, 59)))
+
+    resultado = revisar_moodle(ctx)
+    assert [p["nombre"] for p in resultado["planeadas"]] == ["Manual de Usuario"]
+    manual = _por_nombre(ctx)["Manual de Usuario"]
+    assert {s["tipo_tarea"] for s in ctx.repo.subtareas_de_entrega(manual["id"])} == {"lectura", "informe"}
+
+
+def test_lo_ya_entregado_no_se_planea(ctx, moodle):
+    moodle.estados_tarea[1001] = "submitted"
+    revisar_moodle(ctx)
+    assert "Matriz de Pruebas" not in _por_nombre(ctx)
+
+
+def test_al_entregar_se_cierra_y_libera_sus_bloques(ctx, moodle):
+    revisar_moodle(ctx)
+    matriz = _por_nombre(ctx)["Matriz de Pruebas"]
+    moodle.estados_tarea[1001] = "submitted"
+
+    resultado = revisar_moodle(ctx)
+    assert resultado["cerradas"] == ["Matriz de Pruebas"]
+    assert ctx.repo.obtener_entrega(matriz["id"])["estado"] == "entregada"
+    assert all(b["entrega_id"] != matriz["id"] for b in ctx.repo.bloques_pendientes_desde(momento(16, 8)))
+
+
+def test_si_cambia_la_fecha_se_vuelve_a_agendar(ctx, moodle):
+    revisar_moodle(ctx)
+    moodle.eventos[1] = _evento(1, "Vencimiento de Matriz de Pruebas", 10, momento(18, 23, 59))
+
+    resultado = revisar_moodle(ctx)
+    assert [r["nombre"] for r in resultado["reagendadas"]] == ["Matriz de Pruebas"]
+    matriz = _por_nombre(ctx)["Matriz de Pruebas"]
+    assert matriz["fecha_limite"] == momento(18, 23, 59).isoformat()
+    bloques = [b for b in ctx.repo.bloques_pendientes_desde(momento(16, 8)) if b["entrega_id"] == matriz["id"]]
+    assert bloques and all(b["fin"] <= matriz["fecha_limite"] for b in bloques)
+    assert "📆 Reacomodé" in redactar_aviso_moodle(ctx, resultado)
+
+
+def test_curso_fuera_del_pensum_crea_la_materia(ctx, moodle):
+    moodle.eventos.append(_evento(5, "Vencimiento de Ensayo", 30, momento(26, 23, 59)))
+    revisar_moodle(ctx)
+    ensayo = _por_nombre(ctx)["Ensayo"]
+    assert ensayo["materia"] == "Otros cursos de Moodle"
+
+
+def test_se_puede_desactivar(ctx, moodle):
+    from dataclasses import replace
+
+    ctx.ajustes = replace(ctx.ajustes, moodle_planear_entregas=False)
+    resultado = revisar_moodle(ctx)
+    assert resultado["planeadas"] == [] and ctx.repo.entregas_abiertas() == []
+
+
+def test_pendientes_por_materia_con_fecha_y_lo_que_falta(ctx, moodle):
+    from skills import soporte
+
+    revisar_moodle(ctx)
+    texto = soporte.texto_pendientes(ctx)
+    assert texto.startswith("Gestión de Proyectos de TI:\n• Matriz de Pruebas — dom 22 nov, 11:59 p. m. — faltan 6 días")
+    assert "• Plan de Pruebas — dom 29 nov, 11:59 p. m. — faltan 13 días" in texto
+    assert "\n\nSistemas Operativos:\n• Quiz semáforos" in texto
+    assert soporte.listar_pendientes(ctx)["texto"] == texto

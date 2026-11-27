@@ -182,6 +182,8 @@ Para cada estudiante con Moodle conectado, E.D.I.T.H. revisa el calendario de Mo
 - una entrega está a 72, 24 o 3 horas de vencer (cada aviso se envía una sola vez),
 - el profesor sube contenido nuevo al curso (diapositivas, lecturas…) con la opción "notificar cambio de contenido".
 
+Además, **todo lo que hay en Moodle queda planeado solo**: cada tarea o quiz sin entregar se registra como entrega, se divide en subtareas y recibe bloques de estudio, sin tener que dictárselo. Si cambia la fecha se reacomoda y, al entregar, se liberan sus bloques. Se desactiva con `moodle.planear_entregas: false` en `config.yaml`. `/pendientes` muestra todo agrupado por materia, con la fecha y lo que falta para cada entrega.
+
 Consulta el estado de cada entrega: **lo que ya entregaste no se recuerda** (en quices, cuenta un intento terminado), avisa si dejaste un borrador sin enviar y confirma una vez cuando detecta que entregaste. Si el acceso deja de funcionar (por ejemplo, porque cambiaste la contraseña), avisa una vez y pide reconectar con `/conectar_moodle`.
 
 Moodle no ofrece webhooks para estudiantes, por eso la detección es por consulta periódica, un estudiante a la vez para no saturar la plataforma. La primera revisión solo registra lo existente, sin anunciarlo como nuevo. La consulta en lenguaje natural ("¿qué tengo en Moodle esta semana?", "¿ya entregué el plan de pruebas?") también funciona desde el chat.
@@ -274,7 +276,6 @@ python -m ml.entrenar --regenerar
 
 - Leer el programa de cada materia y extraer fechas y porcentajes de forma automática.
 - Calcular la nota necesaria en lo que falta del semestre y usarla en la prioridad.
-- Convertir cada tarea nueva de Moodle en una entrega planificada con un botón.
 - Notas de Moodle: "¿cómo voy en Redes?" y cuánto se necesita en el final.
 - Descargar y organizar solo el material que suben los profesores.
 - Mensajes de voz.
