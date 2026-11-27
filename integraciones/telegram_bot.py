@@ -22,6 +22,7 @@ skills y el LLM son síncronos y se ejecutan en un hilo aparte para no bloquear 
 from __future__ import annotations
 
 import asyncio
+import difflib
 import logging
 import os
 import re
@@ -1148,6 +1149,30 @@ class BotEdith:
 
         llm.al_cambiar = avisar
 
+    def comandos(self) -> list[tuple[str, object]]:
+        """Cada comando del bot y su manejador (algunos con un alias corto)."""
+        return [
+            ("start", self.cmd_start), ("ayuda", self.cmd_ayuda), ("help", self.cmd_ayuda),
+            ("cancelar", self.cmd_cancelar),
+            ("semestre", self.cmd_semestre), ("materias", self.cmd_materias), ("hoy", self.cmd_hoy),
+            ("pendientes", self.cmd_pendientes), ("revisar_dia", self.cmd_revisar_dia),
+            ("moodle", self.cmd_moodle), ("calendario", self.cmd_calendario),
+            ("ocultar_curso", self.cmd_ocultar_curso), ("mostrar_curso", self.cmd_mostrar_curso),
+            ("pausar", self.cmd_pausar), ("reanudar", self.cmd_reanudar), ("estado", self.cmd_estado),
+            ("ajustes", self.cmd_ajustes), ("conectar_moodle", self.cmd_conectar_moodle),
+            ("desconectar_moodle", self.cmd_desconectar_moodle), ("mis_datos", self.cmd_mis_datos),
+            ("olvidarme", self.cmd_olvidarme), ("olvidar", self.cmd_olvidarme),
+            ("admin", self.cmd_admin), ("anuncio", self.cmd_anuncio), ("reentrenar", self.cmd_reentrenar),
+        ]
+
+    async def comando_desconocido(self, update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
+        """Un /algo que no existe: se sugiere el comando más parecido en lugar de no responder."""
+        escrito = (update.message.text or "").split()[0].lstrip("/").split("@")[0].lower()
+        conocidos = [nombre for nombre, _ in self.comandos() if nombre not in ("admin", "anuncio", "reentrenar", "help")]
+        parecidos = difflib.get_close_matches(escrito, conocidos, n=1, cutoff=0.5)
+        sugerencia = f" ¿Quisiste decir /{parecidos[0]}?" if parecidos else ""
+        await update.message.reply_text(f"No conozco el comando /{escrito}.{sugerencia} Escribe /ayuda para ver todos.")
+
     def construir(self, con_updater: bool = True) -> Application:
         """Crea la aplicación de Telegram con sus manejadores y trabajos programados.
 
@@ -1162,23 +1187,13 @@ class BotEdith:
         # El portero va en el grupo -1: se ejecuta antes que todos los demás.
         app.add_handler(TypeHandler(Update, self.portero), group=-1)
         privado = filters.ChatType.PRIVATE
-        for nombre, manejador in [
-            ("start", self.cmd_start), ("ayuda", self.cmd_ayuda), ("help", self.cmd_ayuda),
-            ("cancelar", self.cmd_cancelar),
-            ("semestre", self.cmd_semestre), ("materias", self.cmd_materias), ("hoy", self.cmd_hoy),
-            ("pendientes", self.cmd_pendientes), ("revisar_dia", self.cmd_revisar_dia),
-            ("moodle", self.cmd_moodle), ("calendario", self.cmd_calendario),
-            ("ocultar_curso", self.cmd_ocultar_curso), ("mostrar_curso", self.cmd_mostrar_curso),
-            ("pausar", self.cmd_pausar), ("reanudar", self.cmd_reanudar), ("estado", self.cmd_estado),
-            ("ajustes", self.cmd_ajustes), ("conectar_moodle", self.cmd_conectar_moodle),
-            ("desconectar_moodle", self.cmd_desconectar_moodle), ("mis_datos", self.cmd_mis_datos),
-            ("olvidarme", self.cmd_olvidarme),
-            ("admin", self.cmd_admin), ("anuncio", self.cmd_anuncio), ("reentrenar", self.cmd_reentrenar),
-        ]:
+        for nombre, manejador in self.comandos():
             app.add_handler(CommandHandler(nombre, manejador, filters=privado))
         app.add_handler(CallbackQueryHandler(self.al_pulsar_boton))
         app.add_handler(MessageHandler(privado & filters.Document.ALL, self.al_recibir_documento))
         app.add_handler(MessageHandler(privado & filters.TEXT & ~filters.COMMAND, self.al_recibir_texto))
+        # Lo que empiece por / y no sea un comando conocido: en vez de silencio, una sugerencia.
+        app.add_handler(MessageHandler(privado & filters.COMMAND, self.comando_desconocido))
         app.add_error_handler(self.al_fallar)
 
         ajustes = self.gestor.ajustes

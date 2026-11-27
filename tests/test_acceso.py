@@ -124,3 +124,22 @@ def test_el_dueno_recibe_los_cambios_del_banco_de_llm(gestor):
 
     asyncio.run(probar())
     assert (DUENO, "🔁 cambio de proveedor") in privado.enviados
+
+
+def test_comando_desconocido_sugiere_el_correcto(gestor):
+    privado = bot(gestor)
+    respuestas: list[str] = []
+
+    async def responder(texto, **_):
+        respuestas.append(texto)
+
+    def escribir(texto):
+        actualizacion = SimpleNamespace(message=SimpleNamespace(text=texto, reply_text=responder))
+        asyncio.run(privado.comando_desconocido(actualizacion, None))
+
+    escribir("/olvidr")
+    assert "¿Quisiste decir /olvidar" in respuestas[-1]
+    escribir("/xyzzy")
+    assert "No conozco el comando /xyzzy." in respuestas[-1] and "Quisiste" not in respuestas[-1]
+    # /olvidar existe como atajo de /olvidarme.
+    assert ("olvidar", privado.cmd_olvidarme) in [(n, m) for n, m in privado.comandos()]
