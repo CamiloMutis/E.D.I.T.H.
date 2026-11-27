@@ -58,7 +58,7 @@ from ajustes import DIAS_SEMANA
 from db.cuentas import PAUSA_INDEFINIDA
 from integraciones.moodle import ClienteMoodle, ErrorMoodle, ErrorSesionMoodle
 from ml.extraccion_texto import EXTENSIONES
-from skills import soporte
+from skills import cursos_ocultos, soporte
 from skills.agenda import ErrorSkill, fecha
 from skills.contexto import formato_fecha, formato_hora, formato_horas
 from skills.exportar_calendario import calendario_ics
@@ -93,6 +93,7 @@ Tu semestre:
 /pendientes — entregas abiertas
 /revisar_dia — revisar lo de hoy y reorganizar
 /moodle — revisar Moodle ahora
+/ocultar_curso — dejar de ver un curso de Moodle para siempre · /mostrar_curso — deshacerlo
 /calendario — tu plan en un archivo para Google Calendar u Outlook
 /semestre N — cambiar el semestre · /materias — materias activas
 
@@ -109,6 +110,7 @@ COMANDOS_MENU = [
     ("hoy", "Plan del día"),
     ("pendientes", "Entregas abiertas y su riesgo"),
     ("moodle", "Revisar Moodle ahora"),
+    ("ocultar_curso", "No ver más un curso de Moodle"),
     ("revisar_dia", "Revisar lo de hoy y reorganizar"),
     ("calendario", "Exportar tu plan a tu calendario"),
     ("pausar", "Pausar los avisos"),
@@ -647,6 +649,63 @@ class BotEdith:
             activas = sesion.ctx.repo.materias_activas()
             await update.message.reply_text("Materias activas:\n" + "\n".join(f"• {m['nombre']}" for m in activas))
 
+    async def cmd_ocultar_curso(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """/ocultar_curso → lista tus cursos de Moodle · /ocultar_curso 2 o /ocultar_curso ingles → lo oculta."""
+        sesion = await self._sesion_activa(update)
+        if not sesion:
+            return
+        texto = " ".join(context.args or []).strip()
+        if not texto:
+            cursos = cursos_ocultos.cursos_conocidos(sesion.ctx)
+            if not cursos:
+                await update.message.reply_text("Aún no conozco tus cursos de Moodle. Prueba con /moodle y vuelve a intentarlo.")
+                return
+            lineas = [
+                f"{n}. {c}" + (" (oculto)" if cursos_ocultos.esta_oculto(sesion.ctx, c) else "")
+                for n, c in enumerate(cursos, start=1)
+            ]
+            await update.message.reply_text(
+                "Tus cursos de Moodle:\n" + "\n".join(lineas)
+                + "\n\nPara no volver a ver uno, escribe /ocultar_curso y su número (ej.: /ocultar_curso 2)."
+            )
+            return
+        try:
+            resultado = await self._en_hilo(sesion, cursos_ocultos.ocultar_curso, sesion.ctx, texto)
+        except ErrorSkill as error:
+            await update.message.reply_text(str(error))
+            return
+        cerradas = resultado["entregas_cerradas"]
+        await update.message.reply_text(
+            f"Listo: oculté «{resultado['curso']}» para siempre. Sus tareas ya no se registran, no se planean "
+            f"y no te avisan." + (f" Cerré {cerradas} entrega(s) que ya tenía planeadas y liberé sus bloques." if cerradas else "")
+            + "\nPara deshacerlo: /mostrar_curso"
+        )
+
+    async def cmd_mostrar_curso(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """/mostrar_curso → lista los ocultos · /mostrar_curso 1 → vuelve a vigilarlo."""
+        sesion = await self._sesion_activa(update)
+        if not sesion:
+            return
+        ocultos = cursos_ocultos.ocultos(sesion.ctx)
+        texto = " ".join(context.args or []).strip()
+        if not texto:
+            if not ocultos:
+                await update.message.reply_text("No tienes cursos ocultos.")
+                return
+            await update.message.reply_text(
+                "Cursos ocultos:\n" + "\n".join(f"{n}. {c}" for n, c in enumerate(ocultos, start=1))
+                + "\n\nPara volver a vigilar uno: /mostrar_curso y su número."
+            )
+            return
+        try:
+            resultado = await self._en_hilo(sesion, cursos_ocultos.mostrar_curso, sesion.ctx, texto)
+        except ErrorSkill as error:
+            await update.message.reply_text(str(error))
+            return
+        await update.message.reply_text(
+            f"Vuelvo a vigilar «{resultado['curso']}»: en la próxima revisión de Moodle aparecerán sus tareas."
+        )
+
     async def cmd_hoy(self, update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
         sesion = await self._sesion_activa(update)
         if sesion:
@@ -1109,6 +1168,7 @@ class BotEdith:
             ("semestre", self.cmd_semestre), ("materias", self.cmd_materias), ("hoy", self.cmd_hoy),
             ("pendientes", self.cmd_pendientes), ("revisar_dia", self.cmd_revisar_dia),
             ("moodle", self.cmd_moodle), ("calendario", self.cmd_calendario),
+            ("ocultar_curso", self.cmd_ocultar_curso), ("mostrar_curso", self.cmd_mostrar_curso),
             ("pausar", self.cmd_pausar), ("reanudar", self.cmd_reanudar), ("estado", self.cmd_estado),
             ("ajustes", self.cmd_ajustes), ("conectar_moodle", self.cmd_conectar_moodle),
             ("desconectar_moodle", self.cmd_desconectar_moodle), ("mis_datos", self.cmd_mis_datos),

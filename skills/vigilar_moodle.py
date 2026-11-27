@@ -15,6 +15,7 @@ from integraciones.moodle import ErrorMoodle, EventoMoodle, NotificacionMoodle
 from skills.agenda import ErrorSkill, fecha
 from skills.consultar_moodle import obtener_cliente
 from skills.contexto import Contexto, formato_fecha, formato_hora, formato_vence, lista_por_materia
+from skills.cursos_ocultos import filtrar
 from skills.planear_moodle import sincronizar_entregas
 
 # Solo estos eventos son vencimientos. La apertura de un quiz ("open") se toma
@@ -50,6 +51,8 @@ def revisar_moodle(ctx: Contexto) -> dict:
     except ErrorMoodle as error:
         ctx.moodle = None  # la próxima revisión vuelve a iniciar sesión
         raise ErrorSkill(f"Moodle no respondió: {error}") from error
+    # Los cursos que el estudiante ocultó no existen para E.D.I.T.H.: ni se registran ni avisan.
+    eventos = filtrar(ctx, eventos)
 
     repo = ctx.repo
     primera_vez = repo.preferencia(PREFERENCIA_SEMBRADO) is None
@@ -146,7 +149,7 @@ def _contenido_nuevo(ctx: Contexto, cliente) -> list[NotificacionMoodle]:
         return []  # no vale la pena perder los avisos de entregas por esto
     if notificaciones:
         ctx.repo.fijar_preferencia(PREFERENCIA_ULTIMA_NOTIFICACION, str(notificaciones[-1].id))
-    return notificaciones if ultima else []
+    return filtrar(ctx, notificaciones) if ultima else []
 
 
 # ------------------------------------------------------------------ redacción

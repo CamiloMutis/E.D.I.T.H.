@@ -119,6 +119,16 @@ def sincronizar_entregas(
         try:
             existente = ctx.repo.entrega_de_moodle(clave)
             if existente:
+                if existente["estado"] == "oculta" and not entregado and e.inicio > ahora:
+                    # Su curso se volvió a mostrar (/mostrar_curso): se reabre y se agenda de nuevo.
+                    ctx.repo.cerrar_entrega(existente["id"], "abierta")
+                    ctx.repo.activar_materia(existente["materia_id"])
+                    ctx.repo.actualizar_fecha_entrega(existente["id"], e.inicio)
+                    bloques, estado = agendar_entrega(ctx, ctx.repo.obtener_entrega(existente["id"]))
+                    resultado["reagendadas"].append(
+                        {"nombre": nombre, "materia": existente["materia"], "vence": e.inicio, "bloques": len(bloques), "riesgo": estado["riesgo"]}
+                    )
+                    continue
                 if existente["estado"] != "abierta":
                     continue
                 if entregado:

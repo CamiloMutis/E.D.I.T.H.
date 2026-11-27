@@ -49,6 +49,9 @@ def consultar_moodle(ctx: Contexto, dias: int = 14, curso: str | None = None) ->
         ctx.moodle = None  # la próxima vez se vuelve a iniciar sesión
         raise ErrorSkill(f"Moodle no respondió: {error}") from error
 
+    from skills.cursos_ocultos import filtrar
+
+    eventos = filtrar(ctx, eventos)  # los cursos ocultos no se muestran
     if curso:
         buscado = curso.strip().lower()
         eventos = [e for e in eventos if buscado in e.curso.lower()]

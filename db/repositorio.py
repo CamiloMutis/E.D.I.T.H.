@@ -218,6 +218,10 @@ class Repositorio:
     def marcar_entregada(self, entrega_id: int) -> None:
         self._ejecutar("UPDATE entregas SET estado = 'entregada' WHERE id = ?", (entrega_id,))
 
+    def cerrar_entrega(self, entrega_id: int, estado: str) -> None:
+        """Saca una entrega de las abiertas sin darla por entregada (por ejemplo, 'oculta')."""
+        self._ejecutar("UPDATE entregas SET estado = ? WHERE id = ?", (estado, entrega_id))
+
     # ------------------------------------------------------------- subtareas
 
     def crear_subtarea(

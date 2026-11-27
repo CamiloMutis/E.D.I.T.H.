@@ -221,6 +221,7 @@ Desde ahí se le habla en lenguaje natural o con comandos:
 | `/pendientes` | Entregas abiertas agrupadas por materia, con la fecha y lo que falta; ⚠️ si no alcanza el tiempo |
 | `/revisar_dia` | Pregunta cómo te fue con los bloques de hoy y reorganiza la semana |
 | `/moodle` | Revisa Moodle ahora: tareas nuevas, fechas cambiadas y lo que está por vencer |
+| `/ocultar_curso` · `/mostrar_curso` | Deja de ver para siempre un curso de Moodle que no te interesa (por ejemplo, un idioma que ya aprobaste) · lo vuelve a mostrar |
 | `/calendario` | Envía tu plan (bloques, entregas y vencimientos de Moodle) como archivo `.ics` para Google Calendar u Outlook |
 | `/semestre N` · `/materias` | Cambia el semestre y, con él, las materias activas |
 | `/pausar` | Pausa resúmenes, revisiones y avisos de Moodle: `/pausar`, `/pausar 3h`, `/pausar 2d`, `/pausar 1s`, `/pausar hasta 30/11` |
@@ -250,7 +251,9 @@ Para cada estudiante con Moodle conectado, E.D.I.T.H. revisa el calendario de Mo
 - una entrega está a 72, 24 o 3 horas de vencer (cada aviso se envía una sola vez),
 - el profesor sube contenido nuevo al curso (diapositivas, lecturas…) con la opción "notificar cambio de contenido".
 
-Además, **todo lo que hay en Moodle queda planeado solo**: cada tarea o quiz sin entregar se registra como entrega, se divide en subtareas y recibe bloques de estudio, sin tener que dictárselo. Si cambia la fecha se reacomoda y, al entregar, se liberan sus bloques. Se desactiva con `moodle.planear_entregas: false` en `config.yaml`. `/pendientes` muestra todo agrupado por materia, con la fecha y lo que falta para cada entrega.
+Además, **todo lo que hay en Moodle queda planeado solo**: cada tarea o quiz sin entregar se registra como entrega, se divide en subtareas y recibe bloques de estudio, sin tener que dictárselo. Si cambia la fecha se reacomoda y, al entregar, se liberan sus bloques. Se desactiva con `moodle.planear_entregas: false` en `config.yaml`.
+
+**Cursos que no te interesan.** Si estás matriculado en un curso que no cuenta para tu semestre, `/ocultar_curso` te muestra tus cursos de Moodle y `/ocultar_curso 2` (o `/ocultar_curso ingles`) lo oculta **para siempre**: sus tareas ya no se registran, no se planean ni te avisan, y lo que ya estaba planeado de ese curso se cierra y libera sus bloques. Se guarda en tu cuenta, así que sobrevive a reinicios; `/mostrar_curso` lo deshace y sus tareas vuelven a planearse en la siguiente revisión. `/pendientes` muestra todo agrupado por materia, con la fecha y lo que falta para cada entrega.
 
 Consulta el estado de cada entrega: **lo que ya entregaste no se recuerda** (en quices, cuenta un intento terminado), avisa si dejaste un borrador sin enviar y confirma una vez cuando detecta que entregaste. Si el acceso deja de funcionar (por ejemplo, porque cambiaste la contraseña), avisa una vez y pide reconectar con `/conectar_moodle`.
 
@@ -275,7 +278,7 @@ pip install -r requirements-dev.txt
 python -m pytest
 ```
 
-Las pruebas cubren el planificador (día lleno, entrega imposible, bloques que no caben, tope diario, margen), los skills, la organización de archivos, la vigilancia de Moodle y su planeación automática, el bucle del agente con un LLM simulado, los adaptadores de cada proveedor y el banco de respaldo entre proveedores, el bot sin conexión, el registro guiado, la pausa, las rutinas por estudiante, el cifrado del token de Moodle, que los datos de un estudiante no se vean desde otro, el acceso privado, el asistente de instalación y el servicio. Se ejecutan en Linux y en Windows con cada cambio.
+Las pruebas cubren el planificador (día lleno, entrega imposible, bloques que no caben, tope diario, margen), los skills, la organización de archivos, la vigilancia de Moodle, su planeación automática y los cursos ocultos, el bucle del agente con un LLM simulado, los adaptadores de cada proveedor y el banco de respaldo entre proveedores, el bot sin conexión, el registro guiado, la pausa, las rutinas por estudiante, el cifrado del token de Moodle, que los datos de un estudiante no se vean desde otro, el acceso privado, el asistente de instalación y el servicio. Se ejecutan en Linux y en Windows con cada cambio.
 
 Para reentrenar los modelos desde cero y volver a generar las métricas:
 
@@ -298,7 +301,7 @@ python -m ml.entrenar --regenerar
 │   ├── herramientas.py       esquemas JSON de los skills
 │   ├── llm.py                adaptador común y banco de proveedores (Groq, GPT, Claude, Gemini y APIs compatibles)
 │   └── prompts.py            prompt de sistema y plantillas
-├── skills/                   los cuatro skills, Moodle (consulta, vigilancia y planeación automática) y soporte
+├── skills/                   los cuatro skills, Moodle (consulta, vigilancia, planeación automática y cursos ocultos) y soporte
 ├── planificador/scheduler.py algoritmo voraz de asignación de bloques
 ├── integraciones/            Telegram, Moodle, Google Calendar y calendario local
 ├── ml/                       entrenamiento, modelos guardados y generación de datos
