@@ -12,15 +12,16 @@ comandos en orden.
 
 | Tu caso | Opción | Costo | ¿Tarjeta? | Datos seguros |
 |---|---|---|---|---|
-| Demo en clase hoy | **C. Tu computador** con `scripts/servicio.sh` | Gratis | No | Sí (en tu disco) |
+| Usarlo tú, en tu equipo | **C. Tu computador** con `python servicio.py activar` | Gratis | No | Sí (en tu disco) |
 | Bot encendido 24/7 gratis | **A. VM gratuita de Google Cloud** (e2-micro) con Docker | Gratis dentro de los límites | Sí (solo verificación) | Sí |
 | Más RAM, si consigues cupo | **A'. VM Always Free de Oracle Cloud** | Gratis | Sí (solo verificación) | Sí |
 | No tienes tarjeta de crédito | **B. Render gratis** en modo webhook | Gratis | No | **No**: se borran al reiniciar |
 
 Lo que necesita el bot: Python 3.12, unos **310 MB de RAM** en funcionamiento normal
 y picos de unos **500 MB** cuando reentrena los modelos (domingos 20:00), disco
-persistente para `data/` y salida a internet por HTTPS hacia Telegram, Groq,
-Google (Gemini) y el Moodle de la universidad. No necesita puertos abiertos en
+persistente para `data/` y salida a internet por HTTPS hacia Telegram, los
+proveedores de LLM que uses (Groq, OpenAI, Anthropic, Google…) y el Moodle de
+la universidad. No necesita puertos abiertos en
 modo *polling* (el normal).
 
 **Regla de oro:** solo puede haber **una** copia del bot corriendo con el mismo
@@ -35,8 +36,10 @@ token. Si lo dejas en el servidor, detenlo en tu computador (y al revés).
    `TELEGRAM_BOT_TOKEN`.
 2. **Llave de Groq** (el LLM principal, gratuito): créala en
    <https://console.groq.com/keys> → `GROQ_API_KEY`.
-3. **Llave de Gemini** (respaldo cuando Groq se queda sin cuota): créala en
-   <https://aistudio.google.com/apikey> → `GEMINI_API_KEY`.
+3. **Respaldos (opcional, recomendado):** las llaves de los proveedores que
+   quieras usar cuando Groq se quede sin cuota (`OPENAI_API_KEY`,
+   `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`…) y el orden en `LLM_PROVIDERS`, por
+   ejemplo `LLM_PROVIDERS=groq,openai,anthropic`. Ver `.env.example`.
 4. **Tu ID de Telegram** (para ser administrador): escríbele a
    [@userinfobot](https://t.me/userinfobot); te responde con un número →
    `TELEGRAM_ADMIN_ID`.
@@ -56,17 +59,23 @@ token. Si lo dejas en el servidor, detenlo en tu computador (y al revés).
    > Si no la defines, la app genera una y la guarda en `/datos/clave_maestra`;
    > en ese caso, respalda el volumen.
 
-6. **Archivo `.env`.** Cópialo desde `.env.example` y complétalo. Ejemplo mínimo
+6. **Archivo `.env`.** Lo más fácil: `python configurar.py` te pregunta todo y lo
+   escribe. A mano: cópialo desde `.env.example` y complétalo. Ejemplo mínimo
    (sin comillas y sin espacios alrededor del `=`):
 
    ```dotenv
    TELEGRAM_BOT_TOKEN=123456789:AAH...
    TELEGRAM_ADMIN_ID=987654321
    GROQ_API_KEY=gsk_...
-   GEMINI_API_KEY=AIza...
+   # Opcional: banco de respaldo, en el orden que prefieras
+   LLM_PROVIDERS=groq,openai
+   OPENAI_API_KEY=sk-...
+   OPENAI_MODEL=nombre-del-modelo
    EDITH_CLAVE_MAESTRA=pon_aqui_la_clave_generada=
    MOODLE_URL=https://pregradov.usc.edu.co
-   # Opcional: exige un código para registrarse en el bot
+   # Quién usa el bot: privado (solo tú, por defecto), invitacion o publico.
+   # Para un servidor abierto a los estudiantes, publico (o invitacion + código).
+   EDITH_ACCESO=publico
    EDITH_CODIGO_INVITACION=
    ```
 
@@ -287,7 +296,7 @@ cada reinicio generaría una clave nueva.
 
 ---
 
-## Opción C: tu computador o una Raspberry Pi (la más simple para la demo)
+## Opción C: tu computador o una Raspberry Pi (la más simple)
 
 Ideal para la presentación en clase, o para dejarlo 24/7 en un equipo viejo o
 una Raspberry Pi en casa. Además, al estar en Colombia, no hay problema de
@@ -298,22 +307,22 @@ git clone https://github.com/CamiloMutis/E.D.I.T.H..git ~/edith
 cd ~/edith
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
-cp .env.example .env && nano .env     # completa los valores
-.venv/bin/python main.py              # prueba: Ctrl+C para detener
+.venv/bin/python configurar.py        # te pregunta todo y escribe el .env
 ```
 
-Para que quede corriendo en segundo plano y se reinicie solo si falla (Linux
-con systemd, sin sudo):
+Para que quede corriendo en segundo plano y se reinicie solo si falla (Linux,
+Windows y macOS, sin permisos de administrador):
 
 ```bash
-scripts/servicio.sh instalar --siempre   # --siempre: corre aunque no inicies sesión
-scripts/servicio.sh estado
-scripts/servicio.sh logs
+python servicio.py activar --siempre   # --siempre (Linux): corre aunque no inicies sesión
+python servicio.py estado
+python servicio.py registro
+python servicio.py desactivar          # lo apaga y quita el arranque automático
 ```
 
 Si el equipo tiene Docker, también puedes usar `docker compose up -d --build`
-igual que en la Opción A. En Windows, deja la terminal abierta con
-`.venv\Scripts\python main.py` o usa Docker Desktop.
+igual que en la Opción A. En Windows, `python servicio.py activar` crea una tarea
+programada que lo arranca al iniciar sesión, sin ventana.
 
 Ojo: el computador no debe suspenderse (desactiva la suspensión automática).
 
@@ -326,7 +335,7 @@ Ojo: el computador no debe suspenderse (desactiva la suspensión automática).
 2. Envía `/estado`: muestra si Moodle y el LLM están funcionando.
 3. Revisa los registros:
    - Docker: `docker compose logs -f`
-   - Servicio en tu equipo: `scripts/servicio.sh logs`
+   - Servicio en tu equipo: `python servicio.py registro`
    - Render: pestaña **Logs** del servicio.
 
    Debes ver líneas como `LLM en uso: groq (...)` y `E.D.I.T.H. en línea`.
@@ -337,10 +346,10 @@ Ojo: el computador no debe suspenderse (desactiva la suspensión automática).
 
 | Síntoma | Causa | Solución |
 |---|---|---|
-| `Conflict: terminated by other getUpdates request` | Hay **dos copias** del bot con el mismo token (por ejemplo, tu PC y el servidor). | Deja solo una: `scripts/servicio.sh detener` o `docker compose down` en la que sobra. Si cambiaste de webhook a polling, reinicia; la app borra el webhook al arrancar en polling. |
+| `Conflict: terminated by other getUpdates request` | Hay **dos copias** del bot con el mismo token (por ejemplo, tu PC y el servidor). | Deja solo una: `python servicio.py desactivar` o `docker compose down` en la que sobra. Si cambiaste de webhook a polling, reinicia; la app borra el webhook al arrancar en polling. |
 | El bot no responde nada | Contenedor caído o token mal copiado. | `docker compose ps` y `docker compose logs --tail 50`. Revisa `TELEGRAM_BOT_TOKEN` en `.env` y luego `docker compose up -d`. |
 | Errores de conexión con Moodle (`timed out`, `ConnectError`) | La universidad bloquea la IP del servidor o Moodle está caído. | Prueba `curl -I https://pregradov.usc.edu.co/login/index.php` en el servidor. Si solo falla desde el servidor, usa un equipo en Colombia (Opción C). |
-| Respuestas más lentas o diferentes; en el registro aparece `429` o "rate limit" de Groq | Se acabó la cuota gratuita de Groq. | Es normal: la app pasa a Gemini si `GEMINI_API_KEY` está definida. La cuota de Groq se recupera sola. |
+| Respuestas más lentas o diferentes; en el registro aparece `429` o "rate limit" de Groq | Se acabó la cuota gratuita de Groq. | Es normal: la app pasa al siguiente proveedor del banco (`LLM_PROVIDERS`) si tienes alguno configurado. La cuota de Groq se recupera sola. |
 | El contenedor se reinicia solo, `Killed` u `OOMKilled` | Falta de memoria (sobre todo en el reentreno del domingo). | En la VM, verifica el swap con `free -h` (el script crea 2 GB). En Render gratis no hay solución: es el límite de 512 MB. |
 | Los estudiantes deben volver a conectar Moodle | Cambió o se perdió `EDITH_CLAVE_MAESTRA`, o se perdió el volumen. | Restaura la clave y el respaldo de `/datos`. |
 | `permission denied` al usar `docker` | Tu usuario aún no está en el grupo `docker`. | Cierra y abre la sesión SSH, o usa `sudo docker ...`. |

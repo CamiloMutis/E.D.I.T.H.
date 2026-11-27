@@ -11,7 +11,7 @@ services:
     build: .
     image: edith:latest
     container_name: edith
-    # Secretos: TELEGRAM_BOT_TOKEN, GROQ_API_KEY, GEMINI_API_KEY, TELEGRAM_ADMIN_ID,
+    # Secretos: TELEGRAM_BOT_TOKEN, GROQ_API_KEY (y las llaves de LLM_PROVIDERS), TELEGRAM_ADMIN_ID,
     # EDITH_CLAVE_MAESTRA, MOODLE_URL... (escribe los valores sin comillas).
     env_file: .env
     environment:

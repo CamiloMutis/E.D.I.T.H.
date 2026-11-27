@@ -211,8 +211,10 @@ def test_groq_y_openai_no_reciben_campos_de_gemini():
 # ------------------------------------------------------------------ crear_cliente
 
 VARIABLES = (
-    "LLM_PROVIDER", "GROQ_API_KEY", "ANTHROPIC_API_KEY", "OPENAI_API_KEY",
-    "OPENAI_MODEL", "GROQ_MODEL", "GEMINI_API_KEY", "GEMINI_MODEL",
+    "LLM_PROVIDER", "LLM_PROVIDERS", "GROQ_API_KEY", "ANTHROPIC_API_KEY", "OPENAI_API_KEY",
+    "OPENAI_MODEL", "GROQ_MODEL", "ANTHROPIC_MODEL", "GEMINI_API_KEY", "GEMINI_MODEL",
+    "GROQ_BASE_URL", "OPENAI_BASE_URL", "OPENROUTER_API_KEY", "OPENROUTER_MODEL",
+    "OPENROUTER_BASE_URL", "OLLAMA_BASE_URL", "OLLAMA_MODEL", "OLLAMA_API_KEY",
 )
 
 
@@ -223,7 +225,7 @@ def entorno_limpio(monkeypatch):
     return monkeypatch
 
 
-def test_crear_cliente_agrega_gemini_como_respaldo(entorno_limpio):
+def test_las_llaves_presentes_forman_el_banco(entorno_limpio):
     entorno_limpio.setenv("GROQ_API_KEY", "clave-de-prueba")
     entorno_limpio.setenv("GEMINI_API_KEY", "clave-de-prueba")
     cliente = crear_cliente()
@@ -231,16 +233,85 @@ def test_crear_cliente_agrega_gemini_como_respaldo(entorno_limpio):
     assert cliente.nombre == "groq→gemini"
     principal, respaldo = cliente.clientes
     assert respaldo.modelo == llm.MODELO_GEMINI
-    # Con respaldo, el principal falla rápido en lugar de reintentar varias veces.
+    # En un banco, cada proveedor falla rápido para pasar al siguiente; el último insiste.
     assert principal._cliente.max_retries <= 1
+    assert respaldo._cliente.max_retries == 4
     assert str(respaldo._cliente.base_url).startswith(llm.GEMINI_URL.rstrip("/"))
 
     entorno_limpio.setenv("LLM_PROVIDER", "anthropic")
     entorno_limpio.setenv("ANTHROPIC_API_KEY", "clave-de-prueba")
-    assert crear_cliente().nombre == "anthropic→gemini"
+    assert crear_cliente().nombre == "anthropic→groq→gemini"
 
 
-def test_crear_cliente_sin_llave_de_gemini_no_cambia(entorno_limpio):
+def test_gemini_ya_no_es_obligatorio(entorno_limpio):
+    entorno_limpio.setenv("GROQ_API_KEY", "clave-de-prueba")
+    entorno_limpio.setenv("OPENAI_API_KEY", "clave-de-prueba")
+    entorno_limpio.setenv("OPENAI_MODEL", "gpt-x")
+    entorno_limpio.setenv("ANTHROPIC_API_KEY", "clave-de-prueba")
+    cliente = crear_cliente()
+    assert cliente.nombre == "groq→openai→anthropic"
+    assert "gemini" not in cliente.nombre
+
+
+def test_el_usuario_elige_el_orden_del_banco(entorno_limpio):
+    entorno_limpio.setenv("LLM_PROVIDERS", "groq, openai , anthropic")
+    entorno_limpio.setenv("GROQ_API_KEY", "clave-de-prueba")
+    entorno_limpio.setenv("OPENAI_API_KEY", "clave-de-prueba")
+    entorno_limpio.setenv("OPENAI_MODEL", "gpt-x")
+    entorno_limpio.setenv("ANTHROPIC_API_KEY", "clave-de-prueba")
+    entorno_limpio.setenv("GEMINI_API_KEY", "clave-de-prueba")
+    cliente = crear_cliente()
+    # Gemini tiene llave pero no está en la lista: no se usa.
+    assert cliente.nombre == "groq→openai→anthropic"
+    assert [c.modelo for c in cliente.clientes] == [llm.MODELO_GROQ, "gpt-x", llm.MODELO_ANTHROPIC]
+
+    entorno_limpio.setenv("LLM_PROVIDERS", "anthropic,groq")
+    assert crear_cliente().nombre == "anthropic→groq"
+
+
+def test_varias_llaves_de_un_mismo_proveedor(entorno_limpio):
+    entorno_limpio.setenv("GROQ_API_KEY", "llave-1, llave-2")
+    cliente = crear_cliente()
+    assert cliente.nombre == "groq#1→groq#2"
+    assert [c._cliente.api_key for c in cliente.clientes] == ["llave-1", "llave-2"]
+
+
+def test_api_compatible_con_openai_entra_al_banco(entorno_limpio):
+    entorno_limpio.setenv("LLM_PROVIDERS", "groq,openrouter,ollama")
+    entorno_limpio.setenv("GROQ_API_KEY", "clave-de-prueba")
+    entorno_limpio.setenv("OPENROUTER_API_KEY", "clave-de-prueba")
+    entorno_limpio.setenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+    entorno_limpio.setenv("OPENROUTER_MODEL", "meta-llama/llama-3.3-70b-instruct")
+    # Un servidor local puede no pedir llave.
+    entorno_limpio.setenv("OLLAMA_BASE_URL", "http://localhost:11434/v1")
+    entorno_limpio.setenv("OLLAMA_MODEL", "llama3.2")
+    cliente = crear_cliente()
+    assert cliente.nombre == "groq→openrouter→ollama"
+    _, router, local = cliente.clientes
+    assert str(router._cliente.base_url).startswith("https://openrouter.ai/api/v1")
+    assert router.modelo == "meta-llama/llama-3.3-70b-instruct"
+    assert local._cliente.api_key == "sin-llave"
+
+
+def test_errores_de_configuracion_del_banco(entorno_limpio):
+    entorno_limpio.setenv("GROQ_API_KEY", "clave-de-prueba")
+    # Proveedor desconocido sin URL.
+    entorno_limpio.setenv("LLM_PROVIDERS", "groq,inventado")
+    with pytest.raises(ErrorLLM, match="INVENTADO_BASE_URL"):
+        crear_cliente()
+    # En la lista escrita a mano, un proveedor sin llave es un error.
+    entorno_limpio.setenv("LLM_PROVIDERS", "groq,anthropic")
+    with pytest.raises(ErrorLLM, match="ANTHROPIC_API_KEY"):
+        crear_cliente()
+
+    # Detectado solo por su llave, un respaldo incompleto se omite y el bot arranca.
+    entorno_limpio.delenv("LLM_PROVIDERS")
+    entorno_limpio.setenv("OPENAI_API_KEY", "clave-de-prueba")   # sin OPENAI_MODEL
+    cliente = crear_cliente()
+    assert cliente.nombre == "groq"
+
+
+def test_crear_cliente_con_un_solo_proveedor(entorno_limpio):
     entorno_limpio.setenv("GROQ_API_KEY", "clave-de-prueba")
     cliente = crear_cliente()
     assert isinstance(cliente, ClienteOpenAICompatible)
@@ -257,8 +328,36 @@ def test_gemini_como_proveedor_principal(entorno_limpio):
 
     entorno_limpio.setenv("GROQ_API_KEY", "clave-de-prueba")
     entorno_limpio.setenv("LLM_PROVIDER", "gemini")
-    assert crear_cliente().nombre == "gemini"
+    assert crear_cliente().nombre == "gemini→groq"
 
     entorno_limpio.delenv("GEMINI_API_KEY")
     with pytest.raises(ErrorLLM):
         crear_cliente()
+
+
+def test_avisa_cuando_cambia_de_proveedor_y_cuando_vuelve():
+    reloj = RelojFalso()
+    principal = ClienteFalso("groq", [_limite()])
+    respaldo = ClienteFalso("openai", [])
+    cliente = ClienteConRespaldo([principal, respaldo], pausa=300, reloj=reloj)
+    avisos: list[str] = []
+    cliente.al_cambiar = avisos.append
+
+    cliente.completar("s", MENSAJES, [])
+    cliente.completar("s", MENSAJES, [])          # sigue en el respaldo: no repite el aviso
+    assert len(avisos) == 1 and "groq" in avisos[0] and "openai" in avisos[0]
+
+    reloj.t += 301                                # termina la pausa y Groq responde
+    cliente.completar("s", MENSAJES, [])
+    assert len(avisos) == 2 and "volvió" in avisos[1]
+
+
+def test_un_aviso_que_falla_no_tumba_la_respuesta():
+    cliente = ClienteConRespaldo([ClienteFalso("groq", [_limite()]), ClienteFalso("openai", [])],
+                                 reloj=RelojFalso())
+
+    def roto(_texto):
+        raise RuntimeError("Telegram caído")
+
+    cliente.al_cambiar = roto
+    assert cliente.completar("s", MENSAJES, []).texto == "openai"

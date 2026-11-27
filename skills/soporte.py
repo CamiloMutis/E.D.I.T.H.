@@ -121,12 +121,36 @@ def listar_pendientes(ctx: Contexto) -> dict:
                 ],
             }
         )
-    return {
+    resultado = {
         "entregas": entregas,
         "total": len(entregas),
         # Así se le muestra al estudiante: por materia, con fecha y lo que falta.
         "texto": texto_pendientes(ctx),
     }
+    if _moodle_desactualizado(ctx, ahora):
+        # Lo registrado puede no estar al día con Moodle: el agente debe consultarlo también.
+        resultado["moodle_desactualizado"] = True
+    return resultado
+
+
+# Más tiempo que esto sin revisar Moodle y los pendientes locales pueden estar incompletos.
+MOODLE_VIGENCIA = timedelta(hours=3)
+
+
+def _moodle_desactualizado(ctx: Contexto, ahora: datetime) -> bool:
+    """Moodle se sincronizó alguna vez (o ya hay cliente) pero no en las últimas ``MOODLE_VIGENCIA``.
+
+    Quien nunca conectó Moodle no tiene revisión ni cliente: no se le marca.
+    """
+    from skills.vigilar_moodle import PREFERENCIA_ULTIMA_REVISION
+
+    ultima = ctx.repo.preferencia(PREFERENCIA_ULTIMA_REVISION)
+    if not ultima:
+        return ctx.moodle is not None
+    try:
+        return ahora - datetime.fromisoformat(ultima) > MOODLE_VIGENCIA
+    except (TypeError, ValueError):
+        return True
 
 
 def texto_pendientes(ctx: Contexto) -> str:

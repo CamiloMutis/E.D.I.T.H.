@@ -9,6 +9,11 @@ Todo se maneja desde el chat:
 * **Rutinas** por estudiante, cada una a su hora: resumen de la mañana, revisión
   de la noche y vigilancia de Moodle. Se detienen con ``/pausar``.
 * **Cuenta**: ``/estado``, ``/ajustes``, ``/calendario``, ``/mis_datos`` y ``/olvidarme``.
+* **Acceso**: por defecto el bot es **privado**: solo lo usa su dueño
+  (``TELEGRAM_ADMIN_ID``) y quienes estén en ``EDITH_USUARIOS_PERMITIDOS``. A
+  cualquier otra persona se le responde que es privado, antes de guardar nada o
+  de gastar el LLM. ``EDITH_ACCESO=invitacion`` pide un código y
+  ``EDITH_ACCESO=publico`` lo abre a todos.
 
 Cada estudiante tiene su propia sesión (base de datos, agente y candado); los
 skills y el LLM son síncronos y se ejecutan en un hilo aparte para no bloquear al bot.
@@ -31,12 +36,21 @@ from telegram.constants import ChatAction
 from telegram.error import BadRequest, Forbidden, TelegramError
 from telegram.ext import (
     Application,
+    ApplicationHandlerStop,
     CallbackQueryHandler,
     CommandHandler,
     ContextTypes,
     MessageHandler,
+    TypeHandler,
     filters,
 )
+
+# Quién puede usar el bot.
+PRIVADO = "privado"        # solo el dueño y los permitidos
+INVITACION = "invitacion"  # quien tenga el código de invitación
+PUBLICO = "publico"        # cualquiera
+MODOS_ACCESO = (PRIVADO, INVITACION, PUBLICO)
+AVISO_PRIVADO = "🔒 Este es un asistente privado de E.D.I.T.H. y solo lo usa su dueño."
 
 from agente.llm import ErrorLLM
 from agente.prompts import aviso_de_respaldo
@@ -108,7 +122,7 @@ POLITICA = """Antes de empezar, lo importante sobre tus datos:
 
 • Guardo tus materias, entregas, bloques de estudio y los archivos que me envíes, solo para ayudarte con tu semestre.
 • Si conectas Moodle, uso tu contraseña una sola vez para pedirle a Moodle un permiso de acceso (token). La contraseña no se guarda y borro el mensaje donde la escribas. El token queda cifrado.
-• Lo que me escribes se procesa con un modelo de lenguaje externo (Groq o Gemini) para entenderte.
+• Lo que me escribes se procesa con un modelo de lenguaje externo (por ejemplo Groq, GPT o Claude, según cómo esté instalado E.D.I.T.H.) para entenderte.
 • Puedes pausarme con /pausar, descargar todo con /mis_datos y borrar todo con /olvidarme.
 
 Este es un proyecto académico de la Universidad Santiago de Cali (Ley 1581 de 2012). ¿Aceptas?"""
@@ -164,12 +178,22 @@ class BotEdith:
         token: str,
         admin_id: int | None = None,
         codigo_invitacion: str | None = None,
+        acceso: str | None = None,
+        permitidos: set[int] | None = None,
     ):
         self.gestor = gestor
         self.cuentas = gestor.cuentas
         self.token = token
         self.admin_id = admin_id
         self.codigo_invitacion = (codigo_invitacion or "").strip() or None
+        # Sin indicar el modo: con código de invitación se pide el código; si no, privado.
+        self.acceso = acceso or (INVITACION if self.codigo_invitacion else PRIVADO)
+        if self.acceso not in MODOS_ACCESO:
+            raise ValueError(f"EDITH_ACCESO debe ser {', '.join(MODOS_ACCESO)}; recibí '{self.acceso}'.")
+        if self.acceso != INVITACION:
+            self.codigo_invitacion = None
+        self.permitidos = set(permitidos or ())
+        self._rechazados: set[int] = set()
         self.app: Application | None = None
         self._archivos_en_duda: dict[str, tuple[int, dict]] = {}
         self._moodle_en_curso = asyncio.Lock()
@@ -178,6 +202,43 @@ class BotEdith:
 
     def es_admin(self, telegram_id: int) -> bool:
         return self.admin_id is not None and telegram_id == self.admin_id
+
+    def puede_usar(self, telegram_id: int | None) -> bool:
+        """En modo privado solo el dueño y los permitidos; en los demás, cualquiera
+        (en invitación el código se pide durante el registro)."""
+        if telegram_id is None:
+            return False
+        if self.acceso != PRIVADO:
+            return True
+        return self.es_admin(telegram_id) or telegram_id in self.permitidos
+
+    def _activos_autorizados(self) -> list:
+        """Cuentas activas que todavía pueden usar el bot (si se cerró, las demás quedan quietas)."""
+        return [u for u in self.cuentas.activos() if self.puede_usar(u["telegram_id"])]
+
+    async def portero(self, update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
+        """Corre antes que cualquier otro manejador: frena a quien no puede usar el bot.
+
+        No se crea cuenta, no se guarda nada y no se llama al LLM. El aviso se
+        envía una sola vez por persona para no responder a un spam.
+        """
+        usuario = update.effective_user
+        if usuario is None or self.puede_usar(usuario.id):
+            return
+        if usuario.id not in self._rechazados:
+            self._rechazados.add(usuario.id)
+            registro.warning(
+                "Acceso rechazado a %s (id %s). Si eres tú, pon TELEGRAM_ADMIN_ID=%s en .env "
+                "o agrégalo a EDITH_USUARIOS_PERMITIDOS.", usuario.full_name, usuario.id, usuario.id,
+            )
+            try:
+                if update.callback_query:
+                    await update.callback_query.answer(AVISO_PRIVADO, show_alert=True)
+                elif update.effective_chat and update.effective_chat.type == "private":
+                    await update.effective_chat.send_message(AVISO_PRIVADO)
+            except TelegramError:
+                pass
+        raise ApplicationHandlerStop
 
     async def enviar(self, telegram_id: int, texto: str, botones: list[list[InlineKeyboardButton]] | None = None) -> None:
         """Envía un mensaje a un estudiante; lo usan las rutinas, los avisos y los botones."""
@@ -643,7 +704,7 @@ class BotEdith:
         if not texto:
             await update.message.reply_text("Uso: /anuncio TEXTO")
             return
-        activos = self.cuentas.activos()
+        activos = self._activos_autorizados()
         for usuario in activos:
             await self.enviar(usuario["telegram_id"], f"📣 {texto}")
         await update.message.reply_text(f"Enviado a {len(activos)} usuarios.")
@@ -819,11 +880,14 @@ class BotEdith:
     async def vigilar_moodle(self, telegram_id: int, forzar: bool = False) -> bool:
         """Revisa el Moodle de un estudiante y avisa lo nuevo o lo que está por vencer. Devuelve si envió algo.
 
-        Fuera de su horario no consulta nada, salvo que lo pida (``forzar``). Si el
+        Fuera de su horario no consulta nada, salvo que lo pida (``forzar``) o que
+        nunca se haya sincronizado: esa primera revisión registra y planea lo que
+        hay sin anunciarlo como nuevo (solo recuerda lo que está por vencer). Si el
         token dejó de servir, deja de intentarlo y le pide que vuelva a conectar.
         """
         sesion = self.gestor.sesion(telegram_id)
-        if not (forzar or dentro_del_horario(sesion.ctx)):
+        primera_vez = sesion.ctx.repo.preferencia(PREFERENCIA_ULTIMA_REVISION) is None
+        if not (forzar or primera_vez or dentro_del_horario(sesion.ctx)):
             return False
         try:
             resultado = await self._en_hilo(sesion, revisar_moodle, sesion.ctx)
@@ -857,7 +921,7 @@ class BotEdith:
         """
         ahora = self.gestor.ahora()
         hoy = ahora.date().isoformat()
-        for usuario in self.cuentas.activos():
+        for usuario in self._activos_autorizados():
             telegram_id = usuario["telegram_id"]
             try:
                 hasta = usuario["pausado_hasta"]
@@ -887,7 +951,7 @@ class BotEdith:
         if self._moodle_en_curso.locked():
             return  # la ronda anterior aún no termina
         async with self._moodle_en_curso:
-            for usuario in self.cuentas.activos():
+            for usuario in self._activos_autorizados():
                 if usuario["moodle_estado"] != "conectado" or self._en_pausa(usuario):
                     continue
                 try:
@@ -1009,6 +1073,21 @@ class BotEdith:
             await app.bot.set_my_commands([BotCommand(c, d) for c, d in COMANDOS_MENU])
         except TelegramError as error:
             registro.warning("No se pudo publicar el menú de comandos: %s", error)
+        self.conectar_avisos_del_llm(asyncio.get_running_loop())
+
+    def conectar_avisos_del_llm(self, bucle: asyncio.AbstractEventLoop) -> None:
+        """Si el LLM es un banco, cada cambio de proveedor le llega al administrador por Telegram.
+
+        El LLM corre en otro hilo, así que el mensaje se encola en el bucle del bot.
+        """
+        llm = self.gestor.llm
+        if self.admin_id is None or not hasattr(llm, "al_cambiar"):
+            return
+
+        def avisar(texto: str) -> None:
+            asyncio.run_coroutine_threadsafe(self.enviar(self.admin_id, texto), bucle)
+
+        llm.al_cambiar = avisar
 
     def construir(self, con_updater: bool = True) -> Application:
         """Crea la aplicación de Telegram con sus manejadores y trabajos programados.
@@ -1021,6 +1100,8 @@ class BotEdith:
             constructor = constructor.updater(None)
         app = constructor.build()
         self.app = app
+        # El portero va en el grupo -1: se ejecuta antes que todos los demás.
+        app.add_handler(TypeHandler(Update, self.portero), group=-1)
         privado = filters.ChatType.PRIVATE
         for nombre, manejador in [
             ("start", self.cmd_start), ("ayuda", self.cmd_ayuda), ("help", self.cmd_ayuda),
@@ -1065,4 +1146,14 @@ async def context_typing(update: Update) -> None:
 def admin_desde_entorno() -> int | None:
     valor = os.getenv("TELEGRAM_ADMIN_ID") or os.getenv("TELEGRAM_CHAT_ID")
     return int(valor) if valor and valor.strip().lstrip("-").isdigit() else None
+
+
+def acceso_desde_entorno() -> tuple[str | None, set[int]]:
+    """``EDITH_ACCESO`` (privado, invitacion o publico) y los ids de ``EDITH_USUARIOS_PERMITIDOS``."""
+    modo = (os.getenv("EDITH_ACCESO") or "").strip().lower() or None
+    permitidos = {
+        int(parte) for parte in re.split(r"[,\s]+", os.getenv("EDITH_USUARIOS_PERMITIDOS") or "")
+        if parte.strip().lstrip("-").isdigit()
+    }
+    return modo, permitidos
 

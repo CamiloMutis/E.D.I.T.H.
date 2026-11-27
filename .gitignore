@@ -1,5 +1,8 @@
 # Secretos y credenciales
 .env
+# Copias del .env (configurar.py deja .env.bak): también llevan las llaves.
+.env.*
+!.env.example
 credentials.json
 token.json
 

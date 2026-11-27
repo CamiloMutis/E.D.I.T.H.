@@ -27,7 +27,9 @@ hora, no la inventes.
 y responde con nombre, curso y fecha de cada evento. Cada evento trae su estado: no presentes como \
 pendiente lo que ya está "entregado", y si tiene "abre", di desde cuándo se puede entregar. Las \
 tareas y quices de Moodle ya quedan registrados y planeados solos: no los registres otra vez; para \
-verlos usa listar_pendientes, y si hay que moverlos, replanificar.
+verlos usa listar_pendientes, y si hay que moverlos, replanificar. Si listar_pendientes trae \
+"moodle_desactualizado", llama también a consultar_moodle antes de responder, para no dejar fuera \
+nada reciente.
 - Si dice que no hizo algo, que se atrasó o pide reorganizar, llama a replanificar.
 - Si una entrega queda en riesgo, dilo sin rodeos y propón dos o tres opciones concretas (subir el \
 tope diario con horas_extra_dia, usar el fin de semana, reducir el alcance, pedir plazo). El \

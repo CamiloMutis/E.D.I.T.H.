@@ -9,12 +9,15 @@ Formato de los mensajes:
     {"rol": "asistente", "texto": "...", "llamadas": [LlamadaHerramienta, ...]}
     {"rol": "herramienta", "llamada_id": "...", "nombre": "...", "texto": "<json>"}
 
-Respaldo automático: si hay ``GEMINI_API_KEY`` y el proveedor principal es
-otro, ``crear_cliente()`` devuelve un ``ClienteConRespaldo``. Cuando el
-principal falla por límite de uso (429), error del servidor, tiempo de espera
-o conexión, la misma solicitud se repite en Gemini y la conversación sigue.
-Tras un 429 el principal queda en pausa unos minutos para no esperar por él en
-cada mensaje.
+Banco de proveedores: quien instala E.D.I.T.H. decide el orden en ``.env``
+(``LLM_PROVIDERS=groq,openai,anthropic``) y puede poner varias llaves de un
+mismo proveedor separadas por comas. ``crear_cliente()`` devuelve entonces un
+``ClienteConRespaldo``: cuando un proveedor falla por límite de uso (429),
+error del servidor, tiempo de espera o conexión, la misma solicitud pasa al
+siguiente y la conversación sigue. Tras un 429 ese proveedor queda en pausa
+unos minutos para no esperar por él en cada mensaje. Cualquier API compatible
+con OpenAI (OpenRouter, DeepSeek, Ollama…) entra al banco con
+``<NOMBRE>_BASE_URL``, ``<NOMBRE>_MODEL`` y ``<NOMBRE>_API_KEY``.
 
 Gemini se usa por su API compatible con OpenAI. Sus modelos recientes devuelven
 una «firma de pensamiento» en cada llamada a herramienta y exigen recibirla de
@@ -323,6 +326,17 @@ class ClienteConRespaldo:
         self._reloj = reloj
         self._pausado_hasta: dict[int, float] = {}
         self.ultimo: ClienteLLM | None = None
+        # Se llama con un texto cuando el banco pasa a un respaldo o vuelve al
+        # principal (por ejemplo, para avisarle al administrador por Telegram).
+        self.al_cambiar: Callable[[str], None] | None = None
+
+    def _avisar(self, texto: str) -> None:
+        if self.al_cambiar is None:
+            return
+        try:
+            self.al_cambiar(texto)
+        except Exception:  # un aviso fallido nunca debe tumbar la respuesta
+            registro.exception("No se pudo avisar el cambio de proveedor")
 
     def _en_pausa(self, indice: int) -> bool:
         return self._reloj() < self._pausado_hasta.get(indice, float("-inf"))
@@ -350,62 +364,122 @@ class ClienteConRespaldo:
                 continue
             if indice != 0 and self.ultimo is not cliente:
                 registro.info("Respondiendo con el respaldo %s (%s).", cliente.nombre, cliente.modelo)
+                anterior = self.ultimo or self.clientes[0]
+                self._avisar(
+                    f"🔁 {anterior.nombre} no está respondiendo ({'; '.join(errores)[:200]}). "
+                    f"Sigo con el respaldo {cliente.nombre} ({cliente.modelo})."
+                )
             elif indice == 0 and self.ultimo is not None and self.ultimo is not cliente:
                 registro.info("%s vuelve a responder como proveedor principal.", cliente.nombre)
+                self._avisar(f"✅ {cliente.nombre} volvió a responder; es otra vez el proveedor principal.")
             self.ultimo = cliente
             return respuesta
         raise ErrorLLM("Ningún proveedor de LLM respondió. " + " | ".join(errores), OTRO)
 
 
-def _cliente_gemini(llave: str, max_retries: int = 4) -> ClienteOpenAICompatible:
-    modelo = os.getenv("GEMINI_MODEL") or MODELO_GEMINI
-    return ClienteOpenAICompatible("gemini", llave, modelo, GEMINI_URL, max_retries=max_retries)
+# Proveedores conocidos: URL de su API (None = la de OpenAI) y modelo por defecto
+# (None = hay que indicarlo en <NOMBRE>_MODEL). El orden es el del banco cuando
+# no se define LLM_PROVIDERS: Groq primero porque su plan gratuito basta.
+PROVEEDORES = {
+    "groq": (GROQ_URL, MODELO_GROQ),
+    "openai": (None, None),
+    "anthropic": (None, MODELO_ANTHROPIC),
+    "gemini": (GEMINI_URL, MODELO_GEMINI),
+}
+
+
+def _lista(valor: str | None) -> list[str]:
+    """``"a, b ,,c"`` → ``["a", "b", "c"]``."""
+    return [parte.strip() for parte in (valor or "").split(",") if parte.strip()]
+
+
+def _variable(nombre: str, sufijo: str) -> str:
+    """Nombre de la variable de entorno de un proveedor: ``open-router`` → ``OPEN_ROUTER_API_KEY``."""
+    return f"{nombre.upper().replace('-', '_')}_{sufijo}"
+
+
+def _llaves(nombre: str) -> list[str]:
+    """Llaves de un proveedor; ``GROQ_API_KEY=llave1,llave2`` da dos llaves."""
+    return _lista(os.getenv(_variable(nombre, "API_KEY")))
+
+
+def _clientes_de(nombre: str, reintentos: int) -> list[ClienteLLM]:
+    """Un cliente por cada llave del proveedor. Lanza ``ErrorLLM`` si falta algo."""
+    conocido = PROVEEDORES.get(nombre)
+    base_url = os.getenv(_variable(nombre, "BASE_URL")) or (conocido[0] if conocido else None)
+    modelo = os.getenv(_variable(nombre, "MODEL")) or (conocido[1] if conocido else None)
+    llaves = _llaves(nombre)
+    if not conocido and not base_url:
+        raise ErrorLLM(
+            f"'{nombre}' no es un proveedor conocido: para usarlo como API compatible con OpenAI "
+            f"define {_variable(nombre, 'BASE_URL')}, {_variable(nombre, 'MODEL')} y {_variable(nombre, 'API_KEY')}."
+        )
+    if not llaves:
+        if conocido:
+            raise ErrorLLM(f"Falta la llave de '{nombre}' en {_variable(nombre, 'API_KEY')} dentro de .env.")
+        # Un servidor propio (por ejemplo Ollama) puede no pedir llave.
+        llaves = ["sin-llave"]
+    if not modelo:
+        raise ErrorLLM(f"Para usar '{nombre}' indica el modelo en {_variable(nombre, 'MODEL')} dentro de .env.")
+
+    clientes: list[ClienteLLM] = []
+    for posicion, llave in enumerate(llaves, start=1):
+        if nombre == "anthropic":
+            cliente = ClienteAnthropic(llave, modelo, max_retries=reintentos)
+        else:
+            cliente = ClienteOpenAICompatible(nombre, llave, modelo, base_url, max_retries=reintentos)
+        if len(llaves) > 1:
+            # Se distinguen en el registro sin mostrar la llave.
+            cliente.nombre = f"{nombre}#{posicion}"
+        clientes.append(cliente)
+    return clientes
+
+
+def orden_de_proveedores() -> list[str]:
+    """Orden del banco de LLM según ``.env``.
+
+    1. ``LLM_PROVIDERS=groq,openai,anthropic``: exactamente ese orden.
+    2. Si no, ``LLM_PROVIDER`` (o el primero con llave) va primero y detrás, como
+       respaldo, los demás proveedores conocidos que tengan llave.
+    """
+    explicito = [nombre.lower() for nombre in _lista(os.getenv("LLM_PROVIDERS"))]
+    if explicito:
+        return list(dict.fromkeys(explicito))
+    con_llave = [nombre for nombre in PROVEEDORES if _llaves(nombre)]
+    principal = (os.getenv("LLM_PROVIDER") or "").strip().lower()
+    if not principal:
+        return con_llave
+    return [principal] + [nombre for nombre in con_llave if nombre != principal]
 
 
 def crear_cliente() -> ClienteLLM:
-    """Crea el cliente según ``LLM_PROVIDER`` o, si no se indica, según las llaves disponibles.
+    """Crea el banco de LLM configurado en ``.env``.
 
-    Groq va primero porque su plan gratuito permite usar el proyecto sin costo.
-    Si además hay ``GEMINI_API_KEY`` y el principal es otro proveedor, se
-    devuelve un ``ClienteConRespaldo`` que pasa a Gemini cuando el principal falla.
+    Con un solo proveedor y una sola llave devuelve ese cliente. Con varios
+    devuelve un ``ClienteConRespaldo`` que los recorre en orden: cuando uno se
+    queda sin cuota, falla o no responde, la misma solicitud pasa al siguiente.
     """
-    llaves = {
-        "groq": os.getenv("GROQ_API_KEY"),
-        "anthropic": os.getenv("ANTHROPIC_API_KEY"),
-        "openai": os.getenv("OPENAI_API_KEY"),
-        "gemini": os.getenv("GEMINI_API_KEY"),
-    }
-    proveedor = (os.getenv("LLM_PROVIDER") or "").strip().lower()
-    if not proveedor:
-        proveedor = next((nombre for nombre, llave in llaves.items() if llave), "")
-    if proveedor not in llaves:
+    orden = orden_de_proveedores()
+    if not orden:
         raise ErrorLLM(
             "No hay un LLM configurado. Crea una llave gratuita en https://console.groq.com "
             "y ponla en GROQ_API_KEY dentro del archivo .env."
         )
-    llave = llaves[proveedor]
-    if not llave:
-        raise ErrorLLM(f"LLM_PROVIDER es '{proveedor}' pero falta su llave de API en .env.")
-    if proveedor == "gemini":
-        return _cliente_gemini(llave)
-
-    respaldo = llaves["gemini"]
-    # Con respaldo, el principal falla rápido en lugar de esperar reintentos.
-    reintentos = 1 if respaldo else 4
-    if proveedor == "groq":
-        principal = ClienteOpenAICompatible(
-            "groq", llave, os.getenv("GROQ_MODEL") or MODELO_GROQ, GROQ_URL, max_retries=reintentos
-        )
-    elif proveedor == "anthropic":
-        principal = ClienteAnthropic(
-            llave, os.getenv("ANTHROPIC_MODEL") or MODELO_ANTHROPIC, max_retries=reintentos
-        )
-    else:
-        modelo = os.getenv("OPENAI_MODEL")
-        if not modelo:
-            raise ErrorLLM("Para usar OpenAI indica el modelo en OPENAI_MODEL dentro de .env.")
-        principal = ClienteOpenAICompatible("openai", llave, modelo, max_retries=reintentos)
-
-    if not respaldo:
-        return principal
-    return ClienteConRespaldo([principal, _cliente_gemini(respaldo)])
+    explicito = bool(_lista(os.getenv("LLM_PROVIDERS")))
+    varios = len(orden) > 1 or len(_llaves(orden[0])) > 1
+    # En un banco cada proveedor falla rápido para pasar al siguiente en lugar
+    # de quedarse reintentando; solo el último insiste.
+    clientes: list[ClienteLLM] = []
+    for posicion, nombre in enumerate(orden):
+        ultimo = posicion == len(orden) - 1
+        try:
+            clientes.extend(_clientes_de(nombre, reintentos=4 if (ultimo or not varios) else 1))
+        except ErrorLLM as error:
+            # El orden escrito a mano y el proveedor principal deben estar
+            # completos; un respaldo detectado solo por su llave se omite.
+            if explicito or posicion == 0:
+                raise
+            registro.warning("Se omite %s del banco de LLM: %s", nombre, error)
+    if len(clientes) == 1:
+        return clientes[0]
+    return ClienteConRespaldo(clientes)

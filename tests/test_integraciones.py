@@ -37,7 +37,8 @@ class ConsultaFalsa:
 
 def bot_de_prueba(gestor) -> BotEdith:
     """Bot que, en lugar de enviar a Telegram, guarda (destinatario, texto, botones)."""
-    bot = BotEdith(gestor, "123456:token-de-prueba", admin_id=1)
+    # Estas pruebas simulan un servicio con varios estudiantes: modo público.
+    bot = BotEdith(gestor, "123456:token-de-prueba", admin_id=1, acceso="publico")
     bot.enviados = []
 
     async def enviar(telegram_id, texto, botones=None):

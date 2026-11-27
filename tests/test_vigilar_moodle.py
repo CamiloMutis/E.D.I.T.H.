@@ -214,9 +214,19 @@ def test_sin_moodle_url_no_se_programa_la_vigilancia(bot, gestor):
 
 
 def test_el_bot_no_revisa_fuera_del_horario(bot, sesion_moodle):
+    asyncio.run(bot.vigilar_moodle_todos())            # primera sincronización, de día
+    consultas = len(sesion_moodle.servidor.llamadas)
     sesion_moodle.ctx.reloj.actual = momento(20, 23)
     asyncio.run(bot.vigilar_moodle_todos())
-    assert [n for n, _ in sesion_moodle.servidor.llamadas] == ["login"]   # solo el inicio de sesión del fixture
+    assert len(sesion_moodle.servidor.llamadas) == consultas   # de noche ya no consulta
+
+
+def test_la_primera_sincronizacion_no_espera_al_horario(bot, sesion_moodle):
+    # Quien conecta Moodle de madrugada no debe esperar hasta las 6:00 para ver sus tareas.
+    sesion_moodle.ctx.reloj.actual = momento(20, 3)
+    asyncio.run(bot.vigilar_moodle_todos())
+    assert sesion_moodle.ctx.repo.preferencia("moodle_ultima_revision") is not None
+    assert "Empecé a vigilar Moodle" in _textos(bot)[-1]
 
 
 def test_el_bot_avisa_dentro_del_horario(bot, sesion_moodle):
