@@ -30,13 +30,13 @@ rutinas:
   reentreno_hora: "20:00"
 
 carpetas:
-  vigilada: ~/Downloads     # donde llegan los archivos nuevos
+  vigilada: ~/Downloads     # sin uso por ahora: los archivos llegan por el chat
   destino: ~/Universidad    # Universidad/<Materia>/<Entrega>/
 
 calendario:
   backend: auto             # auto | google | local
 
-# Vigilancia de Moodle (requiere MOODLE_URL, MOODLE_USUARIO y MOODLE_CLAVE en .env).
+# Vigilancia de Moodle (requiere MOODLE_URL en .env; cada estudiante conecta su cuenta desde el chat).
 # Avisa por Telegram cuando publican una tarea, cuando abre, cuando cambia su
 # fecha, cuando está por vencer (si aún no la entregaste) y cuando el profesor
 # sube contenido nuevo. Solo revisa dentro del horario.

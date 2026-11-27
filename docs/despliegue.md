@@ -338,7 +338,7 @@ Ojo: el computador no debe suspenderse (desactiva la suspensión automática).
    - Servicio en tu equipo: `python servicio.py registro`
    - Render: pestaña **Logs** del servicio.
 
-   Debes ver líneas como `LLM en uso: groq (...)` y `E.D.I.T.H. en línea`.
+   Debes ver líneas como `LLM en uso: groq→gemini (...)` y `E.D.I.T.H. en línea`.
 4. En modo webhook, abre `https://TU-SERVICIO.onrender.com/salud` en el
    navegador: debe mostrar `ok`.
 

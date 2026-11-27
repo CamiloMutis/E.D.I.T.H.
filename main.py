@@ -60,8 +60,7 @@ def modo_consola(ctx, agente) -> None:
             if texto == "/hoy":
                 print(soporte.resumen_del_dia(ctx))
             elif texto == "/pendientes":
-                for e in soporte.listar_pendientes(ctx)["entregas"]:
-                    print(f"• {e['nombre']} de {e['materia']} — {e['fecha_limite']} ({e['riesgo']})")
+                print(soporte.texto_pendientes(ctx))
             elif texto == "/revisar_dia":
                 resultado = replanificar(ctx)
                 try:

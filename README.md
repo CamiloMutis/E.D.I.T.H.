@@ -11,19 +11,16 @@ al mismo tiempo y muy poco control sobre ellas.
 
 Este proyecto nace en la materia de **Inteligencia Artificial**, cuyo reto era
 resolver una problemática real mediante un **agente inteligente con herramientas
-y skills**. Elegimos la que vivimos todos los días: perder el control
-del
-cronograma académico. Entregas que llegan sin avisar, planes que se
-rompen el
-primer día, informes "de 2 horas" que terminan tomando 5, y archivos
-perdidos
+y skills**. Elegimos la que vivimos todos los días: perder el control del
+cronograma académico. Entregas que llegan sin avisar, planes que se rompen el
+primer día, informes "de 2 horas" que terminan tomando 5, y archivos perdidos
 entre Descargas, Drive y el correo.
 
-**E.D.I.T.H. es nuestra respuesta:** un agente que no solo te recuerda
-las cosas,
+**E.D.I.T.H. es nuestra respuesta:** un agente que no solo te recuerda las cosas,
 sino que dirige tu semestre como un orquestador:
 
-- 📅 **Planea** cada entrega hacia atrás y reserva bloques de trabajo en tu Google Calendar.
+- 📌 **Vigila Moodle** y convierte cada tarea publicada en una entrega planeada, sin que tengas que dictársela.
+- 📅 **Planea** cada entrega hacia atrás y reserva bloques de trabajo, que puedes llevar a Google Calendar u Outlook.
 - 🧠 **Predice** cuánto te vas a demorar *de verdad*, con un modelo de ML entrenado sobre tu historial.
 - 📁 **Organiza** tus archivos por materia con un clasificador entrenado.
 - 🔁 **Corrige el rumbo** cada noche: si te atrasaste, reacomoda tu semana y te avisa qué entregas están en riesgo.
@@ -51,9 +48,11 @@ El sistema se retroalimenta: lo que realmente tardas vuelve al historial y el mo
 
 ```mermaid
 flowchart TD
-    U[Usuario en Telegram] <--> A[Agente orquestador<br/>LLM con tool calling]
+    U[Estudiante en Telegram<br/>mensajes y archivos] <--> A[Agente orquestador<br/>LLM con tool calling]
     P[Programador de tareas<br/>7:00, 22:00, domingo] --> A
-    V[Vigilante de archivos<br/>carpeta de descargas] --> A
+    MO[Moodle<br/>revisión cada 15 min] --> VM[vigilar_moodle]
+    VM -- avisos --> U
+    VM -- tareas pendientes --> S1
     A --> S1[planificar_entrega]
     A --> S2[replanificar]
     A --> S3[estimar_tiempo]
@@ -74,7 +73,7 @@ Cada pieza hace lo que mejor sabe hacer:
 | Tarea | Responsable | Razón |
 |---|---|---|
 | Entender lo que escribe el usuario y elegir el skill | LLM | Lenguaje natural y razonamiento |
-| Dividir una entrega en subtareas | LLM | Requiere entender el enunciado |
+| Dividir una entrega en subtareas | LLM (plantilla por tipo si viene de Moodle) | Requiere entender el enunciado; lo de Moodle se planea sin gastar mensajes |
 | Estimar horas | Modelo de regresión | Aprende del historial y es medible |
 | Clasificar archivos | Modelo de clasificación (LLM si hay duda) | Rápido y sin costo |
 | Asignar bloques y calcular el riesgo | Algoritmo determinista | Debe respetar las restricciones siempre |
@@ -156,7 +155,7 @@ Si prefieres hacerlo a mano, copia `.env.example` como `.env`; cada variable est
 2. **LLM (banco de proveedores).** Crea una llave gratuita en [console.groq.com](https://console.groq.com) y cópiala en `GROQ_API_KEY`; con eso basta. Para que E.D.I.T.H. no se quede sin respuesta cuando se agota la cuota, arma tu propio banco: pon las llaves que tengas (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`…) y el orden en `LLM_PROVIDERS`, por ejemplo `LLM_PROVIDERS=groq,openai,anthropic`. Cuando uno se agota, falla o no responde, la misma conversación sigue con el siguiente sin que el estudiante lo note, y vuelve al primero a los 5 minutos. También puedes poner varias llaves de un proveedor separadas por comas (`GROQ_API_KEY=gsk_1,gsk_2`) y sumar cualquier API compatible con OpenAI, como OpenRouter u Ollama, con `<NOMBRE>_BASE_URL`, `<NOMBRE>_MODEL` y `<NOMBRE>_API_KEY` (ver `.env.example`).
 3. **Administrador.** Pon tu id de Telegram (te lo da [@userinfobot](https://t.me/userinfobot)) en `TELEGRAM_ADMIN_ID`: tendrás `/admin`, `/anuncio` y `/reentrenar` y te llegarán los avisos de errores.
 4. **Google Calendar (opcional, solo modo consola).** En [Google Cloud Console](https://console.cloud.google.com) crea un proyecto, habilita Google Calendar API, crea una credencial OAuth de tipo "Aplicación de escritorio" y guarda el archivo como `credentials.json` en la raíz. La primera ejecución abre el navegador para autorizar. Sin este archivo, E.D.I.T.H. usa un calendario local guardado en SQLite.
-5. **Reglas.** En `config.yaml` se ajustan el semestre, las horas máximas de estudio por día, la franja horaria, el margen antes de cada entrega y las carpetas. En Windows y en Linux la carpeta de descargas por defecto es `~/Downloads`.
+5. **Reglas.** En `config.yaml` se ajustan el semestre, las horas máximas de estudio por día, la franja horaria, el margen antes de cada entrega y las carpetas.
 
 Las materias salen del pénsum de Ingeniería de Sistemas (`data/pensum.json`). Al arrancar quedan activas las del semestre indicado en `config.yaml`; se cambia en cualquier momento con `/semestre N`.
 
@@ -219,7 +218,7 @@ Desde ahí se le habla en lenguaje natural o con comandos:
 | Comando | Qué hace |
 |---|---|
 | `/hoy` | Plan del día: bloques, entregas de la semana y archivos relacionados |
-| `/pendientes` | Entregas abiertas con su nivel de riesgo |
+| `/pendientes` | Entregas abiertas agrupadas por materia, con la fecha y lo que falta; ⚠️ si no alcanza el tiempo |
 | `/revisar_dia` | Pregunta cómo te fue con los bloques de hoy y reorganiza la semana |
 | `/moodle` | Revisa Moodle ahora: tareas nuevas, fechas cambiadas y lo que está por vencer |
 | `/calendario` | Envía tu plan (bloques, entregas y vencimientos de Moodle) como archivo `.ics` para Google Calendar u Outlook |
@@ -231,6 +230,7 @@ Desde ahí se le habla en lenguaje natural o con comandos:
 | `/conectar_moodle` · `/desconectar_moodle` | Conecta, reconecta o borra el acceso a Moodle |
 | `/mis_datos` | Descarga en un `.zip` todo lo que E.D.I.T.H. guarda de ti |
 | `/olvidarme` | Borra tu cuenta, tus datos y tus archivos |
+| `/ayuda` · `/cancelar` | Lista de comandos · cancela el paso guiado en curso |
 
 Sin que se lo pidas, E.D.I.T.H. envía a cada estudiante el resumen de la mañana y la revisión de la noche a la hora que eligió (por defecto 7:00 a. m. y 10:00 p. m.). Si el bot estuvo apagado a esa hora, lo envía al volver, hasta dos horas tarde. Los modelos se reentrenan cada domingo con lo que aportan todos los estudiantes. También organiza cualquier PDF, Word o PowerPoint que le envíes por el chat, en la carpeta de cada estudiante.
 
@@ -254,7 +254,7 @@ Además, **todo lo que hay en Moodle queda planeado solo**: cada tarea o quiz si
 
 Consulta el estado de cada entrega: **lo que ya entregaste no se recuerda** (en quices, cuenta un intento terminado), avisa si dejaste un borrador sin enviar y confirma una vez cuando detecta que entregaste. Si el acceso deja de funcionar (por ejemplo, porque cambiaste la contraseña), avisa una vez y pide reconectar con `/conectar_moodle`.
 
-Moodle no ofrece webhooks para estudiantes, por eso la detección es por consulta periódica, un estudiante a la vez para no saturar la plataforma. La primera revisión solo registra lo existente, sin anunciarlo como nuevo. La consulta en lenguaje natural ("¿qué tengo en Moodle esta semana?", "¿ya entregué el plan de pruebas?") también funciona desde el chat.
+Moodle no ofrece webhooks para estudiantes, por eso la detección es por consulta periódica, un estudiante a la vez para no saturar la plataforma. La primera revisión no anuncia como nuevas las tareas que ya existían, pero sí las agrega al plan. La consulta en lenguaje natural ("¿qué tengo en Moodle esta semana?", "¿ya entregué el plan de pruebas?") también funciona desde el chat.
 
 ### Despliegue
 
@@ -275,7 +275,7 @@ pip install -r requirements-dev.txt
 python -m pytest
 ```
 
-Las pruebas cubren el planificador (día lleno, entrega imposible, bloques que no caben, tope diario, margen), los skills, la organización de archivos, el bucle del agente con un LLM simulado, los adaptadores de cada proveedor y el banco de respaldo entre proveedores, el bot sin conexión, el registro guiado, la pausa, las rutinas por estudiante, el cifrado del token de Moodle, que los datos de un estudiante no se vean desde otro, el acceso privado, el asistente de instalación y el servicio. Se ejecutan en Linux y en Windows con cada cambio.
+Las pruebas cubren el planificador (día lleno, entrega imposible, bloques que no caben, tope diario, margen), los skills, la organización de archivos, la vigilancia de Moodle y su planeación automática, el bucle del agente con un LLM simulado, los adaptadores de cada proveedor y el banco de respaldo entre proveedores, el bot sin conexión, el registro guiado, la pausa, las rutinas por estudiante, el cifrado del token de Moodle, que los datos de un estudiante no se vean desde otro, el acceso privado, el asistente de instalación y el servicio. Se ejecutan en Linux y en Windows con cada cambio.
 
 Para reentrenar los modelos desde cero y volver a generar las métricas:
 
@@ -298,9 +298,9 @@ python -m ml.entrenar --regenerar
 │   ├── herramientas.py       esquemas JSON de los skills
 │   ├── llm.py                adaptador común y banco de proveedores (Groq, GPT, Claude, Gemini y APIs compatibles)
 │   └── prompts.py            prompt de sistema y plantillas
-├── skills/                   los cuatro skills y las herramientas de soporte
+├── skills/                   los cuatro skills, Moodle (consulta, vigilancia y planeación automática) y soporte
 ├── planificador/scheduler.py algoritmo voraz de asignación de bloques
-├── integraciones/            Telegram, Google Calendar, calendario local, vigilante
+├── integraciones/            Telegram, Moodle, Google Calendar y calendario local
 ├── ml/                       entrenamiento, modelos guardados y generación de datos
 ├── notebooks/                datos, predictor y clasificador, ejecutados con salidas
 ├── db/                       esquema SQL, acceso a datos y cuentas (token cifrado)
@@ -320,6 +320,8 @@ python -m ml.entrenar --regenerar
 - En el servidor cada estudiante usa el calendario interno; a Google Calendar u Outlook llega con `/calendario` (un archivo que hay que volver a importar cuando cambia el plan), no con sincronización automática.
 - Consultar Moodle con el acceso de los estudiantes debería acordarse con la oficina de TI de la universidad antes de un uso abierto.
 - El planificador es voraz: encuentra un buen plan, no necesariamente el óptimo.
+- Las tareas de Moodle se dividen con una plantilla según su tipo, no leyendo el enunciado; su estimación de horas es un punto de partida que el estudiante puede corregir por chat.
+- Los archivos se organizan cuando se envían por el chat (o con `/archivo RUTA` en la consola); no se vigila ninguna carpeta del computador.
 - Los PDF escaneados sin texto no se pueden clasificar por contenido; en ese caso pregunta.
 
 ## Mejoras futuras
