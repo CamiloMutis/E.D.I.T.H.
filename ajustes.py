@@ -8,7 +8,7 @@ validado, de modo que ningún otro módulo lee archivos de configuración.
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import time
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -49,9 +49,70 @@ class Ajustes:
     carpeta_vigilada: Path = field(default_factory=lambda: Path.home() / "Downloads")
     carpeta_destino: Path = field(default_factory=lambda: Path.home() / "Universidad")
     calendario_backend: str = "auto"
+    # Vigilancia de Moodle: tareas nuevas y recordatorios de vencimiento.
+    moodle_vigilancia: bool = True
+    moodle_intervalo_minutos: int = 15
+    moodle_horario_inicio: time = time(6, 0)
+    moodle_horario_fin: time = time(22, 0)
+    moodle_avisos_horas: tuple[int, ...] = (72, 24, 3)
+    moodle_dias_adelante: int = 60
+    moodle_contenido_nuevo: bool = True
+    moodle_planear_entregas: bool = True  # cada tarea de Moodle queda registrada y planeada sola
     ruta_db: Path = field(default_factory=lambda: RAIZ / "data" / "edith.db")
     carpeta_modelos: Path = field(default_factory=lambda: RAIZ / "ml" / "modelos")
     carpeta_datos: Path = field(default_factory=lambda: RAIZ / "data")
+    # Modo bot (varios estudiantes): cuentas, datos de cada uno y clave de cifrado.
+    # Se cambia con la variable de entorno EDITH_DATOS (p. ej. un volumen de Docker).
+    carpeta_estado: Path = field(default_factory=lambda: RAIZ / "data")
+    limite_mensajes_dia: int = 80  # mensajes al LLM por estudiante y por día
+
+
+# Lo que cada estudiante puede cambiar desde /ajustes, con su tipo.
+AJUSTES_PERSONALES = {
+    "horas_max_dia": float,
+    "franja_inicio": "hora",
+    "franja_fin": "hora",
+    "hora_resumen": "hora",
+    "hora_revision": "hora",
+    "moodle_horario_inicio": "hora",
+    "moodle_horario_fin": "hora",
+    "moodle_contenido_nuevo": bool,
+}
+
+
+def personalizar(base: Ajustes, propios: dict, carpeta_usuario: Path, semestre: int | None = None) -> Ajustes:
+    """Ajustes de un estudiante: los de ``config.yaml`` con lo que él cambió encima.
+
+    Sus archivos quedan en ``<carpeta_usuario>/Universidad`` y no se vigila
+    ninguna carpeta del servidor.
+    """
+    valores: dict = {}
+    reglas = base.reglas
+    for clave, valor in (propios or {}).items():
+        tipo = AJUSTES_PERSONALES.get(clave)
+        if tipo is None:
+            continue
+        valor = _hora(valor) if tipo == "hora" else tipo(valor)
+        if clave in ("horas_max_dia", "franja_inicio", "franja_fin"):
+            reglas = replace(reglas, **{clave: valor})
+        else:
+            valores[clave] = valor
+    if reglas.franja_inicio >= reglas.franja_fin:
+        reglas = base.reglas
+    resultado = replace(
+        base,
+        reglas=reglas,
+        carpeta_destino=carpeta_usuario / "Universidad",
+        carpeta_vigilada=carpeta_usuario / "_sin_vigilancia",
+        ruta_db=carpeta_usuario / "edith.db",
+        **valores,
+    )
+    if semestre:
+        resultado.semestre_actual = semestre
+    if resultado.moodle_horario_inicio >= resultado.moodle_horario_fin:
+        resultado.moodle_horario_inicio = base.moodle_horario_inicio
+        resultado.moodle_horario_fin = base.moodle_horario_fin
+    return resultado
 
 
 def _hora(texto: str) -> time:
@@ -99,6 +160,20 @@ def cargar_ajustes(ruta_config: Path | None = None) -> Ajustes:
     if dia_reentreno not in DIAS_SEMANA:
         raise ValueError(f"config.yaml: reentreno_dia desconocido: {dia_reentreno}")
 
+    moodle = datos.get("moodle", {}) or {}
+    horario_inicio = _hora(moodle.get("horario_inicio", "06:00"))
+    horario_fin = _hora(moodle.get("horario_fin", "22:00"))
+    if horario_inicio >= horario_fin:
+        raise ValueError("config.yaml: moodle.horario_inicio debe ser anterior a moodle.horario_fin")
+    avisos_horas = tuple(sorted({int(h) for h in moodle.get("avisos_horas", base.moodle_avisos_horas)}, reverse=True))
+    if not avisos_horas or min(avisos_horas) <= 0:
+        raise ValueError("config.yaml: moodle.avisos_horas debe tener horas positivas")
+    intervalo = int(moodle.get("intervalo_minutos", base.moodle_intervalo_minutos))
+    if intervalo < 5:
+        raise ValueError("config.yaml: moodle.intervalo_minutos debe ser de al menos 5")
+    bot = datos.get("bot", {}) or {}
+    carpeta_estado = os.getenv("EDITH_DATOS") or bot.get("carpeta_datos", "data")
+
     return Ajustes(
         zona=ZoneInfo(datos.get("zona_horaria", "America/Bogota")),
         semestre_actual=int(datos.get("semestre_actual", base.semestre_actual)),
@@ -116,4 +191,14 @@ def cargar_ajustes(ruta_config: Path | None = None) -> Ajustes:
         carpeta_destino=_ruta(carpetas.get("destino", "~/Universidad")),
         calendario_backend=str(datos.get("calendario", {}).get("backend", "auto")).lower(),
         ruta_db=_ruta(datos.get("base_de_datos", "data/edith.db")),
+        moodle_vigilancia=bool(moodle.get("vigilancia", base.moodle_vigilancia)),
+        moodle_intervalo_minutos=intervalo,
+        moodle_horario_inicio=horario_inicio,
+        moodle_horario_fin=horario_fin,
+        moodle_avisos_horas=avisos_horas,
+        moodle_dias_adelante=int(moodle.get("dias_adelante", base.moodle_dias_adelante)),
+        moodle_contenido_nuevo=bool(moodle.get("avisar_contenido_nuevo", base.moodle_contenido_nuevo)),
+        moodle_planear_entregas=bool(moodle.get("planear_entregas", base.moodle_planear_entregas)),
+        carpeta_estado=_ruta(carpeta_estado),
+        limite_mensajes_dia=int(bot.get("limite_mensajes_dia", base.limite_mensajes_dia)),
     )

@@ -166,7 +166,8 @@ def test_traduccion_al_formato_de_claude():
 
 
 def test_seleccion_de_proveedor(monkeypatch):
-    for variable in ("LLM_PROVIDER", "GROQ_API_KEY", "ANTHROPIC_API_KEY", "OPENAI_API_KEY", "OPENAI_MODEL", "GROQ_MODEL"):
+    for variable in ("LLM_PROVIDER", "LLM_PROVIDERS", "GROQ_API_KEY", "ANTHROPIC_API_KEY", "OPENAI_API_KEY",
+                     "OPENAI_MODEL", "GROQ_MODEL", "ANTHROPIC_MODEL", "GEMINI_API_KEY", "GEMINI_MODEL"):
         monkeypatch.delenv(variable, raising=False)
     with pytest.raises(ErrorLLM):
         crear_cliente()
@@ -174,10 +175,12 @@ def test_seleccion_de_proveedor(monkeypatch):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "clave-de-prueba")
     assert crear_cliente().nombre == "anthropic"
 
-    # Con varias llaves y sin LLM_PROVIDER, Groq va primero porque es gratuito.
+    # Con varias llaves y sin LLM_PROVIDER, Groq va primero porque es gratuito
+    # y las demás llaves quedan como respaldo.
     monkeypatch.setenv("GROQ_API_KEY", "clave-de-prueba")
     cliente = crear_cliente()
-    assert (cliente.nombre, cliente.modelo) == ("groq", "openai/gpt-oss-120b")
+    assert cliente.nombre == "groq→anthropic"
+    assert cliente.clientes[0].modelo == "openai/gpt-oss-120b"
 
     monkeypatch.setenv("LLM_PROVIDER", "openai")
     with pytest.raises(ErrorLLM):          # falta la llave de OpenAI
@@ -186,4 +189,6 @@ def test_seleccion_de_proveedor(monkeypatch):
     with pytest.raises(ErrorLLM):          # falta indicar el modelo
         crear_cliente()
     monkeypatch.setenv("OPENAI_MODEL", "modelo-x")
-    assert crear_cliente().modelo == "modelo-x"
+    cliente = crear_cliente()
+    assert cliente.nombre == "openai→groq→anthropic"
+    assert cliente.clientes[0].modelo == "modelo-x"

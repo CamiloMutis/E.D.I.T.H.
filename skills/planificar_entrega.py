@@ -47,25 +47,26 @@ def planificar_entrega(ctx: Contexto, entrega_id: int, subtareas: list[dict]) ->
     if not subtareas or len(subtareas) > MAX_SUBTAREAS:
         raise ErrorSkill(f"Se necesitan entre 1 y {MAX_SUBTAREAS} subtareas.")
 
-    ahora = ctx.ahora()
-    limite = fecha(entrega["fecha_limite"])
-    if limite <= ahora:
+    if fecha(entrega["fecha_limite"]) <= ctx.ahora():
         raise ErrorSkill(f"La fecha límite de '{entrega['nombre']}' ya pasó.")
 
-    detalle, por_id = [], {}
+    detalle = []
     for paso in subtareas:
         nombre = str(paso.get("nombre") or "").strip()
         if not nombre:
             raise ErrorSkill("Cada subtarea necesita un nombre.")
+        # ``horas_base`` es una estimación de plantilla (planeación automática): orienta al
+        # modelo, pero no se guarda como si la hubiera dicho el estudiante.
         estimacion = estimar_tiempo(
             ctx, entrega["materia"], paso.get("tipo_tarea"), paso.get("dificultad") or 3,
-            paso.get("horas_usuario"),
+            paso.get("horas_usuario") or paso.get("horas_base"),
         )
+        if not paso.get("horas_usuario"):
+            estimacion["horas_usuario"] = None
         subtarea_id = ctx.repo.crear_subtarea(
             entrega["id"], nombre, estimacion["tipo_tarea"], estimacion["dificultad"],
             estimacion["horas_usuario"], estimacion["horas"],
         )
-        por_id[subtarea_id] = ctx.repo.obtener_subtarea(subtarea_id)
         detalle.append(
             {
                 "subtarea_id": subtarea_id,
@@ -77,17 +78,7 @@ def planificar_entrega(ctx: Contexto, entrega_id: int, subtareas: list[dict]) ->
             }
         )
 
-    desde = redondear_arriba(ahora)
-    tareas = [
-        Tarea(s["id"], horas_a_minutos(s["horas_predichas"]), limite, entrega["id"])
-        for s in por_id.values()
-    ]
-    plan = asignar_hacia_atras(
-        tareas, ocupados(ctx, desde, limite), desde, ctx.ajustes.reglas,
-        minutos_estudio_por_dia(ctx, desde, limite),
-    )
-    bloques = guardar_bloques(ctx, plan, por_id)
-    estado = evaluar_entrega(ctx, entrega, desde, sum(plan.sin_asignar.values()))
+    bloques, estado = agendar_entrega(ctx, entrega)
 
     total_usuario = sum(d["horas_usuario"] or 0 for d in detalle)
     total = sum(d["horas_estimadas"] for d in detalle)
@@ -110,3 +101,33 @@ def planificar_entrega(ctx: Contexto, entrega_id: int, subtareas: list[dict]) ->
         "horas_sin_agendar": estado["horas_sin_agendar"],
         "resumen": resumen,
     }
+
+
+def agendar_entrega(ctx: Contexto, entrega: dict) -> tuple[list[dict], dict]:
+    """Reserva bloques para lo que le falta a una entrega, de su fecha límite hacia atrás.
+
+    No toca los bloques que ya tiene: quien llama libera antes los que quiera mover.
+    Devuelve los bloques creados y el estado de la entrega (riesgo, holgura).
+    """
+    limite = fecha(entrega["fecha_limite"])
+    desde = redondear_arriba(ctx.ahora())
+    ya_agendado: dict[int, int] = {}
+    for b in ctx.repo.bloques_pendientes_desde(desde):
+        if b["entrega_id"] == entrega["id"]:
+            minutos = int((fecha(b["fin"]) - fecha(b["inicio"])).total_seconds() // 60)
+            ya_agendado[b["subtarea_id"]] = ya_agendado.get(b["subtarea_id"], 0) + minutos
+    por_id = {
+        s["id"]: s for s in ctx.repo.subtareas_de_entrega(entrega["id"])
+        if s["estado"] != "hecha" and (s["horas_restantes"] or 0) > 0
+    }
+    tareas = [
+        Tarea(s["id"], max(0, horas_a_minutos(s["horas_restantes"]) - ya_agendado.get(s["id"], 0)), limite, entrega["id"])
+        for s in por_id.values()
+    ]
+    tareas = [t for t in tareas if t.minutos > 0]
+    plan = asignar_hacia_atras(
+        tareas, ocupados(ctx, desde, limite), desde, ctx.ajustes.reglas,
+        minutos_estudio_por_dia(ctx, desde, limite),
+    )
+    bloques = guardar_bloques(ctx, plan, por_id)
+    return bloques, evaluar_entrega(ctx, entrega, desde, sum(plan.sin_asignar.values()))

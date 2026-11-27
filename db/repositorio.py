@@ -32,6 +32,17 @@ def _iso(valor: datetime | str) -> str:
 class Repositorio:
     """Lectura y escritura de materias, entregas, subtareas, bloques y archivos."""
 
+    # Columnas agregadas después de crear una tabla. CREATE TABLE IF NOT EXISTS no
+    # toca una tabla que ya existe, así que una base creada antes las necesita.
+    MIGRACIONES = {
+        "entregas": {"moodle_id": "TEXT"},
+        "moodle_eventos": {
+            "apertura": "TEXT",
+            "apertura_avisada": "INTEGER DEFAULT 0",
+            "entregado": "INTEGER DEFAULT 0",
+        },
+    }
+
     def __init__(self, ruta: Path | str):
         self.ruta = str(ruta)
         if self.ruta != ":memory:":
@@ -44,7 +55,15 @@ class Repositorio:
         self._candado = threading.RLock()
         with self._candado:
             self._conexion.executescript(RUTA_ESQUEMA.read_text(encoding="utf-8"))
+            self._migrar()
             self._conexion.commit()
+
+    def _migrar(self) -> None:
+        for tabla, columnas in self.MIGRACIONES.items():
+            existentes = {f["name"] for f in self._conexion.execute(f"PRAGMA table_info({tabla})")}
+            for columna, tipo in columnas.items():
+                if columna not in existentes:
+                    self._conexion.execute(f"ALTER TABLE {tabla} ADD COLUMN {columna} {tipo}")
 
     # ------------------------------------------------------------------ base
 
@@ -128,6 +147,15 @@ class Repositorio:
                 return min(contenidas, key=lambda m: len(m["nombre"]))
         return None
 
+    def crear_materia(self, nombre: str, semestre: int | None = None) -> dict:
+        """Agrega una materia que no está en el pénsum (por ejemplo, un curso de Moodle) y la deja activa."""
+        self._ejecutar(
+            "INSERT INTO materias (nombre, semestre, activa) VALUES (?, ?, 1) "
+            "ON CONFLICT(nombre) DO UPDATE SET activa = 1",
+            (nombre, semestre),
+        )
+        return self._fila("SELECT * FROM materias WHERE nombre = ?", (nombre,))
+
     def fijar_carpeta_materia(self, materia_id: int, carpeta: str) -> None:
         self._ejecutar("UPDATE materias SET carpeta = ? WHERE id = ?", (carpeta, materia_id))
 
@@ -140,13 +168,27 @@ class Repositorio:
         fecha_limite: datetime,
         peso_nota: float | None = None,
         descripcion: str = "",
+        moodle_id: str | None = None,
     ) -> int:
         cursor = self._ejecutar(
-            "INSERT INTO entregas (materia_id, nombre, descripcion, fecha_limite, peso_nota) "
-            "VALUES (?, ?, ?, ?, ?)",
-            (materia_id, nombre, descripcion, _iso(fecha_limite), peso_nota),
+            "INSERT INTO entregas (materia_id, nombre, descripcion, fecha_limite, peso_nota, moodle_id) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (materia_id, nombre, descripcion, _iso(fecha_limite), peso_nota, moodle_id),
         )
         return cursor.lastrowid
+
+    def entrega_de_moodle(self, moodle_id: str) -> dict | None:
+        """La entrega creada a partir de una actividad de Moodle, abierta o no."""
+        return self._fila(
+            "SELECT e.*, m.nombre AS materia FROM entregas e "
+            "JOIN materias m ON m.id = e.materia_id WHERE e.moodle_id = ? ORDER BY e.id DESC LIMIT 1",
+            (moodle_id,),
+        )
+
+    def actualizar_fecha_entrega(self, entrega_id: int, fecha_limite: datetime) -> None:
+        self._ejecutar(
+            "UPDATE entregas SET fecha_limite = ? WHERE id = ?", (_iso(fecha_limite), entrega_id)
+        )
 
     def obtener_entrega(self, entrega_id: int) -> dict | None:
         return self._fila(
@@ -390,6 +432,44 @@ class Repositorio:
 
     def eliminar_evento_local(self, evento_id: int) -> None:
         self._ejecutar("DELETE FROM eventos_locales WHERE id = ?", (evento_id,))
+
+    # ---------------------------------------------------------------- moodle
+
+    def moodle_eventos(self) -> dict[int, dict]:
+        """Eventos de Moodle vigentes que el vigilante ya conoce, por id."""
+        filas = self._filas("SELECT * FROM moodle_eventos WHERE vigente = 1")
+        for f in filas:
+            f["avisos"] = {int(h) for h in f["avisos"].split(",") if h}
+        return {f["id"]: f for f in filas}
+
+    def guardar_evento_moodle(
+        self,
+        id_: int,
+        nombre: str,
+        curso: str,
+        fecha: datetime,
+        url: str,
+        avisos: set[int],
+        apertura: datetime | None = None,
+        apertura_avisada: bool = False,
+        entregado: bool = False,
+    ) -> None:
+        """Inserta o actualiza un evento; ``avisos`` reemplaza los umbrales ya avisados."""
+        self._ejecutar(
+            "INSERT INTO moodle_eventos (id, nombre, curso, fecha, url, avisos, vigente, apertura, "
+            "apertura_avisada, entregado) VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?) "
+            "ON CONFLICT(id) DO UPDATE SET nombre = excluded.nombre, curso = excluded.curso, "
+            "fecha = excluded.fecha, url = excluded.url, avisos = excluded.avisos, vigente = 1, "
+            "apertura = excluded.apertura, apertura_avisada = excluded.apertura_avisada, "
+            "entregado = excluded.entregado",
+            (
+                id_, nombre, curso, _iso(fecha), url, ",".join(str(h) for h in sorted(avisos)),
+                _iso(apertura) if apertura else None, int(apertura_avisada), int(entregado),
+            ),
+        )
+
+    def retirar_evento_moodle(self, id_: int) -> None:
+        self._ejecutar("UPDATE moodle_eventos SET vigente = 0 WHERE id = ?", (id_,))
 
     # ---------------------------------------------------------- preferencias
 

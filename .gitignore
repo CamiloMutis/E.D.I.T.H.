@@ -1,11 +1,18 @@
 # Secretos y credenciales
 .env
+# Copias del .env (configurar.py deja .env.bak): también llevan las llaves.
+.env.*
+!.env.example
 credentials.json
 token.json
 
 # Datos locales
 data/*.db
 data/*.db-journal
+data/*.db-wal
+data/*.db-shm
+data/usuarios/
+data/clave_maestra
 *.sqlite3
 
 # Python

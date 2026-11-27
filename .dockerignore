@@ -1,0 +1,40 @@
+# Lo que NO entra en la imagen de Docker.
+
+# Secretos y credenciales: llegan por variables de entorno, nunca en la imagen
+.env
+.env.*
+!.env.example
+credentials.json
+token.json
+
+# Datos de ejecución (viven en el volumen /datos)
+data/*.db
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm
+data/usuarios/
+data/clave_maestra
+*.sqlite3
+respaldos/
+
+# Entornos y cachés de Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Cosas que el bot no necesita para correr
+.git/
+.github/
+notebooks/
+tests/
+docs/
+Dockerfile
+docker-compose.yml
+.dockerignore
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

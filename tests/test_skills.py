@@ -211,3 +211,32 @@ def test_reentrenar_incluye_el_historial_de_uso(ctx, tmp_path):
     assert metricas["filas_de_uso"] == 1
     assert metricas["MAE"] < metricas["MAE_linea_base"]
     assert (ctx.ajustes.carpeta_modelos / "predictor_tiempo.joblib").exists()
+
+
+def test_formatos_de_fecha_limite_y_lo_que_falta():
+    from skills.contexto import formato_faltan, formato_vence
+    from tests.conftest import momento
+
+    assert formato_vence(momento(28, 0)) == "vie 27 nov a medianoche"
+    assert formato_vence(momento(29, 23, 59)) == "dom 29 nov, 11:59 p. m."
+    ahora = momento(27, 1)
+    assert formato_faltan(momento(27, 1, 40), ahora) == "faltan 40 min"
+    assert formato_faltan(momento(28, 0), ahora) == "faltan 23 h"
+    assert formato_faltan(momento(29, 23, 59), ahora) == "faltan 2 días"
+    assert formato_faltan(momento(26, 0), ahora) == "ya venció"
+
+
+def test_pendientes_avisa_si_moodle_esta_desactualizado(ctx):
+    from datetime import timedelta
+
+    from skills.vigilar_moodle import PREFERENCIA_ULTIMA_REVISION
+
+    # Sin Moodle conectado no se marca nada.
+    assert "moodle_desactualizado" not in soporte.listar_pendientes(ctx)
+    # Revisado hace poco: al día.
+    ctx.repo.fijar_preferencia(PREFERENCIA_ULTIMA_REVISION, ctx.ahora().isoformat())
+    assert "moodle_desactualizado" not in soporte.listar_pendientes(ctx)
+    # Revisado hace más de 3 horas: el agente debe consultar Moodle también.
+    vieja = (ctx.ahora() - soporte.MOODLE_VIGENCIA - timedelta(minutes=1)).isoformat()
+    ctx.repo.fijar_preferencia(PREFERENCIA_ULTIMA_REVISION, vieja)
+    assert soporte.listar_pendientes(ctx)["moodle_desactualizado"] is True

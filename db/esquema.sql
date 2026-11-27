@@ -20,7 +20,8 @@ CREATE TABLE IF NOT EXISTS entregas (
   peso_nota     REAL,                  -- 0.15 = 15 %
   estado        TEXT DEFAULT 'abierta',   -- abierta | entregada
   riesgo        TEXT,                  -- tranquila | ajustada | en_riesgo
-  holgura       REAL
+  holgura       REAL,
+  moodle_id     TEXT                   -- "assign:123" si vino de Moodle
 );
 
 CREATE TABLE IF NOT EXISTS subtareas (
@@ -93,3 +94,19 @@ CREATE TABLE IF NOT EXISTS preferencias (
 
 CREATE INDEX IF NOT EXISTS idx_bloques_inicio ON bloques(inicio);
 CREATE INDEX IF NOT EXISTS idx_entregas_estado ON entregas(estado);
+
+-- Eventos de Moodle ya vistos por el vigilante: sirve para detectar tareas
+-- nuevas o con fecha cambiada y para no repetir recordatorios.
+CREATE TABLE IF NOT EXISTS moodle_eventos (
+  id              INTEGER PRIMARY KEY,   -- id del evento en Moodle
+  nombre          TEXT NOT NULL,
+  curso           TEXT,
+  fecha           TEXT NOT NULL,         -- vencimiento, ISO 8601
+  url             TEXT,
+  avisos          TEXT DEFAULT '',       -- umbrales ya avisados, p. ej. "72,24"
+  vigente         INTEGER DEFAULT 1,     -- 0 si desapareció de Moodle
+  apertura        TEXT,                  -- desde cuándo se puede entregar, ISO 8601
+  apertura_avisada INTEGER DEFAULT 0,    -- 1 si ya se avisó que abrió (o ya estaba abierta)
+  entregado       INTEGER DEFAULT 0      -- 1 si el estudiante ya la entregó
+);
+-- Las columnas agregadas a tablas ya existentes también están en Repositorio.MIGRACIONES.

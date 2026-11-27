@@ -17,8 +17,11 @@ from skills.contexto import (
     formato_bloque,
     formato_fecha,
     formato_hora,
+    formato_faltan,
     formato_horas,
+    formato_vence,
     franja,
+    lista_por_materia,
 )
 
 ESTADOS_BLOQUE = {"hecho": 1.0, "a_medias": 0.5, "perdido": 0.0}
@@ -102,7 +105,8 @@ def listar_pendientes(ctx: Contexto) -> dict:
                 "entrega_id": entrega["id"],
                 "materia": entrega["materia"],
                 "nombre": entrega["nombre"],
-                "fecha_limite": f"{formato_fecha(limite)}, {formato_hora(limite)}",
+                "fecha_limite": formato_vence(limite),
+                "faltan": formato_faltan(limite, ahora),
                 "dias_restantes": (limite.date() - ahora.date()).days,
                 "peso_nota": entrega["peso_nota"],
                 "riesgo": entrega["riesgo"] or "sin planificar",
@@ -117,7 +121,47 @@ def listar_pendientes(ctx: Contexto) -> dict:
                 ],
             }
         )
-    return {"entregas": entregas, "total": len(entregas)}
+    resultado = {
+        "entregas": entregas,
+        "total": len(entregas),
+        # Así se le muestra al estudiante: por materia, con fecha y lo que falta.
+        "texto": texto_pendientes(ctx),
+    }
+    if _moodle_desactualizado(ctx, ahora):
+        # Lo registrado puede no estar al día con Moodle: el agente debe consultarlo también.
+        resultado["moodle_desactualizado"] = True
+    return resultado
+
+
+# Más tiempo que esto sin revisar Moodle y los pendientes locales pueden estar incompletos.
+MOODLE_VIGENCIA = timedelta(hours=3)
+
+
+def _moodle_desactualizado(ctx: Contexto, ahora: datetime) -> bool:
+    """Moodle se sincronizó alguna vez (o ya hay cliente) pero no en las últimas ``MOODLE_VIGENCIA``.
+
+    Quien nunca conectó Moodle no tiene revisión ni cliente: no se le marca.
+    """
+    from skills.vigilar_moodle import PREFERENCIA_ULTIMA_REVISION
+
+    ultima = ctx.repo.preferencia(PREFERENCIA_ULTIMA_REVISION)
+    if not ultima:
+        return ctx.moodle is not None
+    try:
+        return ahora - datetime.fromisoformat(ultima) > MOODLE_VIGENCIA
+    except (TypeError, ValueError):
+        return True
+
+
+def texto_pendientes(ctx: Contexto) -> str:
+    """Las entregas abiertas como se le muestran al estudiante, agrupadas por materia."""
+    entregas = [
+        {"materia": e["materia"], "nombre": e["nombre"], "vence": fecha(e["fecha_limite"]), "riesgo": e["riesgo"]}
+        for e in ctx.repo.entregas_abiertas()
+    ]
+    if not entregas:
+        return "No tienes entregas pendientes."
+    return lista_por_materia(entregas, ctx.ahora())
 
 
 def consultar_calendario(ctx: Contexto, desde: str, hasta: str) -> dict:
@@ -291,11 +335,12 @@ def resumen_del_dia(ctx: Contexto) -> str:
         if fecha(e["fecha_limite"]) <= ahora + timedelta(days=7)
     ]
     if semana:
-        lineas.append("\nEntregas de los próximos 7 días:")
-        for e in semana:
-            limite = fecha(e["fecha_limite"])
-            riesgo = ETIQUETAS_RIESGO.get(e["riesgo"] or "", "sin planificar")
-            lineas.append(f"• {formato_fecha(limite)}: {e['nombre']} de {e['materia']} ({riesgo})")
+        lineas.append("\nEntregas de los próximos 7 días:\n")
+        lineas.append(lista_por_materia(
+            [{"materia": e["materia"], "nombre": e["nombre"], "vence": fecha(e["fecha_limite"]), "riesgo": e["riesgo"]}
+             for e in semana],
+            ahora,
+        ))
 
     materias_de_hoy = {b["materia"] for b in bloques}
     archivos = []

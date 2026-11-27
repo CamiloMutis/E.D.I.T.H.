@@ -1,0 +1,38 @@
+# E.D.I.T.H. con Docker Compose. Guía completa: docs/despliegue.md
+#
+#   docker compose up -d --build     # construir y arrancar en segundo plano
+#   docker compose logs -f           # ver qué está haciendo (Ctrl+C para salir)
+#   docker compose down              # detener (los datos del volumen se conservan)
+#
+# Solo puede haber UNA copia del bot corriendo por token de Telegram.
+
+services:
+  edith:
+    build: .
+    image: edith:latest
+    container_name: edith
+    # Secretos: TELEGRAM_BOT_TOKEN, GROQ_API_KEY (y las llaves de LLM_PROVIDERS), TELEGRAM_ADMIN_ID,
+    # EDITH_CLAVE_MAESTRA, MOODLE_URL... (escribe los valores sin comillas).
+    env_file: .env
+    environment:
+      EDITH_DATOS: /datos
+    volumes:
+      - edith_datos:/datos
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 30s
+    # Evita que los registros llenen el disco del servidor.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # Modo webhook (solo si defines EDITH_WEBHOOK_URL en .env): descomenta para
+    # publicar el puerto. En modo polling (por defecto) no hace falta abrir nada.
+    # ports:
+    #   - "8080:8080"
+
+volumes:
+  edith_datos:
+    # Nombre fijo para encontrarlo fácil al hacer respaldos.
+    name: edith_datos
