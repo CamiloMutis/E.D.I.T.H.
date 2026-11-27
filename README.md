@@ -104,6 +104,8 @@ git clone https://github.com/CamiloMutis/E.D.I.T.H..git edith
 cd edith
 ```
 
+> **Importante: todos los comandos de este README se ejecutan desde la carpeta del proyecto**, es decir, la carpeta `edith` que creó `git clone` (la que tiene `main.py`, `configurar.py` y `servicio.py`). Desde otra carpeta, o desde dentro de `.venv`, fallan con *"can't open file"*. Si abres una terminal nueva, entra primero a ella con `cd ruta/a/edith`; para saber dónde estás, `pwd` (Linux o macOS) o `cd` (Windows).
+
 Linux o macOS:
 
 ```bash
@@ -148,7 +150,12 @@ Las materias salen del pénsum de Ingeniería de Sistemas (`data/pensum.json`). 
 
 ### Encenderlo
 
-Al terminar, `configurar.py` pregunta cómo quieres usarlo. Para cambiarlo después, abre una terminal **en la carpeta del proyecto** (la que tiene `servicio.py` y `main.py`) y usa el Python del entorno virtual, sin entrar a la carpeta `.venv`:
+Al terminar, `configurar.py` pregunta cómo quieres usarlo. Para cambiarlo después, abre una terminal **en la carpeta donde clonaste el proyecto** (la que tiene `servicio.py` y `main.py`; no funciona desde otra carpeta) y usa el Python del entorno virtual, sin entrar a la carpeta `.venv`:
+
+```bash
+cd ruta/a/edith          # la carpeta que creó git clone
+```
+
 
 ```bash
 # Linux o macOS
