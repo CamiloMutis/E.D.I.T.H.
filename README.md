@@ -148,7 +148,19 @@ Las materias salen del pénsum de Ingeniería de Sistemas (`data/pensum.json`). 
 
 ### Encenderlo
 
-Al terminar, `configurar.py` pregunta cómo quieres usarlo. Para cambiarlo después:
+Al terminar, `configurar.py` pregunta cómo quieres usarlo. Para cambiarlo después, abre una terminal **en la carpeta del proyecto** (la que tiene `servicio.py` y `main.py`) y usa el Python del entorno virtual, sin entrar a la carpeta `.venv`:
+
+```bash
+# Linux o macOS
+.venv/bin/python servicio.py activar
+```
+
+```powershell
+# Windows (PowerShell)
+.venv\Scripts\python servicio.py activar
+```
+
+Si ya activaste el entorno (`source .venv/bin/activate`, `source .venv/bin/activate.fish` en fish o `.venv\Scripts\Activate.ps1` en Windows), basta con `python`, como en la tabla:
 
 | Quiero… | Comando |
 |---|---|
@@ -157,6 +169,8 @@ Al terminar, `configurar.py` pregunta cómo quieres usarlo. Para cambiarlo despu
 | Saber si está corriendo | `python servicio.py estado` |
 | Ver lo que está haciendo | `python servicio.py registro` |
 | Encenderlo solo mientras tenga la terminal abierta | `python main.py` (Ctrl+C lo apaga) |
+
+`activar` se ejecuta **una sola vez**: desde ahí E.D.I.T.H. arranca solo cada vez que prendes el computador, hasta que lo desactives. El servicio guarda la ruta del proyecto, así que no muevas ni renombres la carpeta mientras esté activo (si lo haces, `desactivar` y vuelve a `activar` desde la nueva ubicación).
 
 En Linux usa un servicio de usuario de systemd; en Windows, una tarea programada al iniciar sesión, sin ventana; en macOS, launchd. Ninguno pide permisos de administrador. En Linux, `python servicio.py activar --siempre` lo mantiene encendido aunque no hayas iniciado sesión.
 
