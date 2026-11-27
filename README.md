@@ -126,6 +126,20 @@ py configurar.py
 
 Si PowerShell bloquea la activación, ejecuta antes `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
 
+### Qué es `.venv` y cuándo se usa
+
+`.venv` es una carpeta con **el Python del proyecto y sus librerías** (Telegram, scikit-learn…), separado del Python de tu sistema. No tiene nada que ver con que E.D.I.T.H. esté encendido o apagado.
+
+| | ¿Cuántas veces? |
+|---|---|
+| Crear `.venv` e instalar (`python -m venv .venv` y `pip install -r requirements.txt`) | **Una sola vez**, al instalar |
+| Activar el entorno (`source .venv/bin/activate`; en fish `source .venv/bin/activate.fish`; en Windows `.venv\Scripts\Activate.ps1`) | **En cada terminal nueva** donde vayas a escribir comandos del proyecto |
+| Después de activarlo, en esa misma terminal | Basta con `python …`, todas las veces que quieras |
+
+Al cerrar la terminal el entorno se "desactiva" solo; no pasa nada. Si no quieres activarlo, escribe la ruta del Python del proyecto en cada comando: `.venv/bin/python servicio.py estado` (Windows: `.venv\Scripts\python servicio.py estado`).
+
+Solo lo necesitas cuando **tú escribes un comando**. Con el servicio activado (ver [Encenderlo](#encenderlo)), E.D.I.T.H. arranca solo al prender el computador y usa el `.venv` por su cuenta: no hay que abrir ninguna terminal.
+
 ## Configuración
 
 Cada persona monta **su propio E.D.I.T.H.**, con su propio bot de Telegram (llámalo como quieras: «EdithBot», «Moodle Bot»…) y sus propias llaves. No hace falta editar nada a mano: `python configurar.py` (o `python main.py` la primera vez) pregunta paso a paso y escribe el `.env`, que nunca se sube al repositorio:
@@ -181,7 +195,16 @@ Si ya activaste el entorno (`source .venv/bin/activate`, `source .venv/bin/activ
 
 En Linux usa un servicio de usuario de systemd; en Windows, una tarea programada al iniciar sesión, sin ventana; en macOS, launchd. Ninguno pide permisos de administrador. En Linux, `python servicio.py activar --siempre` lo mantiene encendido aunque no hayas iniciado sesión.
 
-E.D.I.T.H. solo responde mientras está encendido. Telegram deja conectada una sola copia del bot por token: si el servicio está activo, `python main.py` lo avisa en lugar de abrir una segunda.
+E.D.I.T.H. solo responde mientras está encendido. La diferencia entre las dos formas de encenderlo:
+
+| Cómo lo encendiste | ¿Cierras la terminal? | ¿Reinicias el computador? |
+|---|---|---|
+| `python servicio.py activar` | Sigue en línea ✅ (corre en segundo plano) | Arranca solo ✅ |
+| `python main.py` | Se apaga ❌ (vive dentro de esa terminal) | Queda apagado ❌ |
+
+Para comprobar que sigue en línea, abre otra terminal en la carpeta del proyecto y ejecuta `python servicio.py estado`, o escríbele a tu bot. En Linux el servicio se detiene si cierras sesión; con `python servicio.py activar --siempre` sigue corriendo aunque la cierres.
+
+Telegram deja conectada una sola copia del bot por token: si el servicio está activo, `python main.py` lo avisa en lugar de abrir una segunda.
 
 ### Registrarte en tu bot
 
